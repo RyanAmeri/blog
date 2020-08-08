@@ -127,7 +127,15 @@ Using your own previously defined function in this manner is very powerful. It a
 
 > The function reduce takes an array and reduces the elements to a single value. For example it can sum all the numbers, multiply them, or any operation that you can put into a function.
 
-`console.log(reduce(nums, add, 0))` shout output `8`.
+```js
+console.log(reduce(nums, add, 0));
+const nums = [4, 1, 3];
+const add = function (a, b) {
+  return a + b;
+};
+```
+
+should output `8`.
 
 ### Solution 6
 
@@ -139,10 +147,6 @@ function reduce(array, callback, initialValue) {
   });
   return initialValue;
 }
-const nums = [4, 1, 3];
-const add = function (a, b) {
-  return a + b;
-};
 ```
 
 Ah reduce! One of the most misunderstood yet powerful functions in JS (and more broadly in functional programming). The basic concept is this: You have an initial value, you run the callback function on every item in an array, and assign the result to this initial value. At the end, you return this value.
@@ -734,6 +738,8 @@ function myForEach(array, callback) {
 }
 ```
 
-A bit of a throwback to the earlier exercises, implementing forEach manually again. The only difference is that we're manipulating the variable `sum` in the global scope here. I decided that using array.forEach() to create my own forEach was cheating 😉so used a `for... of` loop instead.
+A bit of a throwback to the earlier exercises, implementing forEach manually again. The only difference is that we're manipulating the variable `sum` in the global scope here. I decided that using array.forEach() to create my own forEach was cheating 😉 so used a `for... of` loop instead.
 
 If you found this last exercise very easy, you should see how far you have come since the first exercise in using callbacks and just being comfortable with them.
+
+That's the end of our callback exercises. Next up: Closure!
