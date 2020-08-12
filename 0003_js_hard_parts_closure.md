@@ -1,9 +1,9 @@
 ---
-series: series: Mastering Hard Parts of JavaScript
+series: Mastering Hard Parts of JavaScript
 description: An introduction to JavaScript closure using 19 exercises
 ---
 
-# Mastering JavaScript: Closure
+# Mastering Hard Parts of JavaScript: Closure
 
 Closure is both a deceptively simple yet incredibly powerful part of JavaScript to grasp. The reason why callback functions are so powerful, the reason why asynchronous JS and everything it encompasses (Promises etc) are possible, is closure.
 

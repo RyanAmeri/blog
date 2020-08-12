@@ -1,9 +1,9 @@
 ---
-series: series: Mastering Hard Parts of JavaScript
+series: Mastering Hard Parts of JavaScript
 description: An introduction to JavaScript asynchronicity using 10 exercises
 ---
 
-# Mastering JavaScript: Asynchronicity
+# Mastering Hard Parts of JavaScript: Asynchronicity
 
 ## The Event Loop
 

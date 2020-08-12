@@ -1,9 +1,9 @@
 ---
-series: series: Mastering Hard Parts of JavaScript
+series: Mastering Hard Parts of JavaScript
 description: An introduction to JavaScript callbacks by completing 24 exercises
 ---
 
-# Mastering Hard Parts of JavaScript - Part 1: Callbacks
+# Mastering Hard Parts of JavaScript: Callbacks
 
 I'm currently undertaking [JavaScript: The Hard Parts v2](https://frontendmasters.com/courses/javascript-hard-parts-v2) course at Frontend Masters. It is a brilliant course taught by the amazing Will Sentance. The course goes over the following key concepts:
 
