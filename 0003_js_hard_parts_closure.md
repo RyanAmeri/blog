@@ -1,13 +1,13 @@
 ---
-series: JavaScript The Hard Parts
-description: An introduction to JavaScript closure by completing 19 exercises
+series: series: Mastering Hard Parts of JavaScript
+description: An introduction to JavaScript closure using 19 exercises
 ---
 
 # Mastering JavaScript: Closure
 
 Closure is both a deceptively simple yet incredibly powerful part of JavaScript to grasp. The reason why callback functions are so powerful, the reason why asynchronous JS and everything it encompasses (Promises etc) are possible, is closure.
 
-But what is Closure? Dan Abramov describes it best in his [What The Fuck Is](https://whatthefuck.is/closure) blog:
+But what is Closure? Dan Abramov [describes it best](https://whatthefuck.is/closure):
 
 > You have a closure when a function accesses variables defined outside of it.
 

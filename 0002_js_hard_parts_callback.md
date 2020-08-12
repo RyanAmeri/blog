@@ -1,5 +1,5 @@
 ---
-series: JavaScript The Hard Parts
+series: series: Mastering Hard Parts of JavaScript
 description: An introduction to JavaScript callbacks by completing 24 exercises
 ---
 
