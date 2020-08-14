@@ -266,6 +266,16 @@ line-height: 1.5rem;
 
 Any new line or space finishes the emmet, so basically it stops it from working so you need to generate your html or css before hitting space or return. There is no reason to construct complex convoluted emmet commands, just go two steps deep and construct small snippets and build from there.
 
+## VS Code and git
+
+VS Code has a full git UI built in. To bring it up, press `Ctrl + Shit + g`. You can write your commit message and press `Command + Enter` to commit it, and if the changes are not staged yet it will ask you and can stage them first before committing.
+
+VSC also provides a diff so you can see everything that has been changed since the last commit. The diff can be viewed either side by side (which is the default). clicking on the number next to the filename brings up the diff but this can also be toggled with inline view to show the diff in a more traditional way using colour highlighting.
+
+Many common git commands from push and pull to creating new branches can be performed inside VS Code, but probably the most useful is to commit the file you are currently working on and view diffs. You can also view the file as it currently exists in HEAD.
+
+The number of files with unsaved changes, and the number of files with pending commits are also highlighted helpfully in the side bar. If your side bar is not in view you can toggle it using `Cmd + B`.
+
 ## Useful keybindings
 
 - `Cmd + D` selects the word where the cursor is located. If pressed again, it will also select the subsequent occurrences of the word (with multiple cursors).
