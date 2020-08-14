@@ -298,13 +298,76 @@ Three methods to rename things:
 
 You can also select a few lines of code. On the left you'll see a yellow lightbulb, if you click on that you'll see the option to "Extract to method..." which allows you to refactor your code into a new function. You can give it a name right there and it automatically creates the required arguments and parameters in the method.
 
+## Type Checking
+
+### Why use types
+
+- Allows us to catch bugs at compile time instead of runtime.
+- Provides better developer experience especially combined with VS Code.
+- Our code makes our intention much clearer
+- We can get away with writing less test, as our tests need to cover less areas.
+- In modern JS runtimes (such as V8) code is by default interpreted. However if if the shape of our code is found to be reliably functioning in the same way, meaning it has consistent properties and the types of values are always the same, V8 puts this code into a different mode and compiles it to assembly. This is much faster than interpreted. If we change the type once, the code is put back into interpreted mode. So writing code with types results in more optimised code.
+
+### How to add types to JavaScript
+
+A lot of VS Code's power comes from type checking and type inferencing. VS Code itself is mostly written in TypeScript and is heavily tied to it, in order to get the most out of VS Code, we either have to use TS or we can add types to our JavaScript.
+
+TypeScript is a typed superset of JavaScript. It relies on type inference: the automatic deduction of data types of an expression. TypeScript is an opt-in, you can rename your .js file to .ts and it will (mostly) be valid TypeScript. Obviously we'll get lots of errors about missing types, but it should work.
+
+But we can also apply type checking to JavaScript using JSDoc comments (which is also what TS uses in the background).
+
+### Activating Type Checking in VS Code
+
+- If our project is already using typescript, all we need to do is add `"checkJS": ture` to our `tsconfig.json` file.
+- If we are working on a purely JS project, we can add the comment `// @ts-check` to the top of our JS file (first line)
+
+### Explicitly adding type information with JSDoc
+
+```ts
+/** @type {number} */
+let value = 21;
+value = "hello"; //VS Code will warn us of an error;
+```
+
+### Defining our own types
+
+We can use `@typedef` to create a new named type of our own. For example:
+
+```js
+/**
+ * @typedef {Object} InventoryItem
+ * @prop {string} name
+ * @prop {number} price
+ */
+
+/**
+ * @typedef {{qty: number, item: InventoryItem}} InvoiceItem //first {} says that I'm defining my type here and the second {} is saying that this is an object
+ */
+
+/** @type {InvoiceItem[]} */
+let invoice = [];
+invoice.push({
+  qty: 2,
+  item: {
+    name: "Apple",
+    price: 1.32,
+  },
+}); // This is fine
+
+invoice.push({ bad: "thing" }); // This is not ok and will show error
+```
+
+**In mathematical terms: _The signature of our function is the hypothesis and the implementation is the proof._**
+
+## Debugging in VS Code
+
+// We have left the course at this point. Come back and finish this later.
+
 ## Miscellaneous
 
 ### Useful keybindings
 
-All these keybindings showcase the default key bindings but they can of course be changed to mimic any other editor or changed to match your own preferences.
-
-The shortcuts presented here are on Mac OS. They will be subtly different on other OSes.
+All these keybindings showcase the default key bindings but they can of course be changed to mimic any other editor or changed to match your own preferences. The shortcuts presented here are on Mac OS. They will be subtly different on other OSes.
 
 #### Selection
 
