@@ -1,4 +1,6 @@
-# Tips and Tricks for getting the most out of VS Code
+# Getting the most out of VS Code as a Web Developer
+
+Lessons from taking the Visual Studio Code course on [Frontend Masters](https://frontendmasters.com/courses/visual-studio-code/) by [Mike North](https://mike.works)
 
 Overview
 
@@ -266,7 +268,59 @@ line-height: 1.5rem;
 
 Any new line or space finishes the emmet, so basically it stops it from working so you need to generate your html or css before hitting space or return. There is no reason to construct complex convoluted emmet commands, just go two steps deep and construct small snippets and build from there.
 
-## VS Code and git
+## Refactoring with VS Code
+
+### Navigating through code with VS Code
+
+The `Cmd + P` keyboard shortcut will bring up a list of recently opened files that we can quickly go to.
+
+When the mouse is hovering on a JS function, if we hold the `Cmd` key it turns the function into a link, and if we click on it it will take us to the definition of that function.
+
+If you are working on a typescript project, even if the file you are currently on is pure JS, as long as the types are defined somewhere, you can right click on a method and go to type definition and vsc will take you to the definition of the method.
+
+Opening the command palette and then entering the `#` character, you can search through 'symbols'. Symbols are high level names that related to your data structures such as classes, functions, constants, or even headings in markdown files etc.
+
+If we begin with `#` vsc searches through all our current workspace. If we want to search through the symbols only the current file, we can put the `@` character at the beginning of the command palette.
+
+Putting the `:` character at the beginning of the command palette will allow you go jump to a line number.
+
+### Peek Editing
+
+`Shift + F12` Will allow you to peek at the definition, and also see everywhere else that that definition has been used. This is most useful for when you have your types defined, either as JS or TS.
+
+### Renaming
+
+Three methods to rename things:
+
+1. Find/Replace using `Cmd + F` the old fashioned way.
+2. Using `Cmd + D` or `Cmd + Shift + L` and using multi cursor to rename
+3. Pressing `F2` allows us to rename something in all files in our workspace. Notice that after this renaming, all files where the modifications have been made need to be saved (or we can use Save All).
+
+You can also select a few lines of code. On the left you'll see a yellow lightbulb, if you click on that you'll see the option to "Extract to method..." which allows you to refactor your code into a new function. You can give it a name right there and it automatically creates the required arguments and parameters in the method.
+
+## Miscellaneous
+
+### Useful keybindings
+
+All these keybindings showcase the default key bindings but they can of course be changed to mimic any other editor or changed to match your own preferences.
+
+The shortcuts presented here are on Mac OS. They will be subtly different on other OSes.
+
+#### Selection
+
+- `Cmd + D` selects the word where the cursor is located. If pressed again, it will also select the subsequent occurrences of the word (with multiple cursors).
+- Select all occurrences: `Cmd + Shift + L`
+- To select a random section of text, hold down `Option + Shift` and then drag the mouse over the selection area. This is basically a _box selection_ and is useful for example for copy/pasting HTML from somewhere.
+- `Option + Click` gives you multi cursor. If you click on the wrong place once, you can use `Cmd + U` to undo the last selection.
+
+#### Line Manipulation
+
+- `Option + Up` or `Option + Down` moves the line up or down.
+- `Shift + Option + Up` or `Shift + Option + Down` copies the current line up or down.
+
+* `` Ctrl + ` `` will open the terminal
+
+### VS Code and git
 
 VS Code has a full git UI built in. To bring it up, press `Ctrl + Shit + g`. You can write your commit message and press `Command + Enter` to commit it, and if the changes are not staged yet it will ask you and can stage them first before committing.
 
@@ -275,8 +329,3 @@ VSC also provides a diff so you can see everything that has been changed since t
 Many common git commands from push and pull to creating new branches can be performed inside VS Code, but probably the most useful is to commit the file you are currently working on and view diffs. You can also view the file as it currently exists in HEAD.
 
 The number of files with unsaved changes, and the number of files with pending commits are also highlighted helpfully in the side bar. If your side bar is not in view you can toggle it using `Cmd + B`.
-
-## Useful keybindings
-
-- `Cmd + D` selects the word where the cursor is located. If pressed again, it will also select the subsequent occurrences of the word (with multiple cursors).
-- `` Ctrl + ` `` will open the terminal
