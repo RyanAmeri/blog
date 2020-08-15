@@ -1,6 +1,8 @@
 # Code is for Humans
 
-These are some of the gems that can be found watching Kylie Simpson's [Code is for Humans](https://frontendmasters.com/teachers/kyle-simpson/code-is-for-humans/) presentation at [Frontend Masters](https://frontendmasters.com). The talk is available for free and definitely a must watch. Here is my brief overview.
+![Getify's Avatar](https://dev-to-uploads.s3.amazonaws.com/i/hefljg5gzis7dvnt2dq5.png)
+
+These are some of the gems that can be found watching Kylie Simpson's [Code is for Humans](https://frontendmasters.com/teachers/kyle-simpson/code-is-for-humans/) presentation at [Frontend Masters](https://frontendmasters.com). The talk is available for free and in my opinion, a must watch for new web developers. Here is my brief overview.
 
 **If you don't know why your code works, you have no hope of fixing it when it breaks.** _--getify's law #42_
 
