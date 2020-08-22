@@ -56,7 +56,7 @@ This also is a common misconception (perhaps it was more common in earlier days)
 - object
 - symbol
 - BigInt
-- null? (it's a type but the historical bug...)
+- null? (it's a type but the historical bug...) (perhaps write a note about JavaScript backwards compatibility here)
 
 - the `typeof` operator always returns a string.
 - `undefined` and `undeclared` are entirely different concepts.
@@ -109,9 +109,7 @@ Don't use `new` with:
 - Number
 - Boolean
 
-## Exercise 1 Polyfill Object.is()
-
-### Instructions
+## Exercise 1: Polyfill Object.is()
 
 1. `Object.is(..)` should take two parameters.
 2. It should return `true` if the passed in parameters are exactly the same value (not just `===` -- see below!), or `false` otherwise.
@@ -146,13 +144,11 @@ console.log(Object.is(null, undefined) === false);
 console.log(Object.is(undefined, null) === false);
 ```
 
-### Solution
-
-My Solution:
+### Exercise 1 Solution
 
 {% codepen https://codepen.io/ryanameri/pen/LYNRVBV default-tab=js %}
 
-Kyle's Solution:
+### Exercise 1 Kyle's Solution
 
 {% codepen https://codepen.io/ryanameri/pen/JjXRdxo default-tab=js %}
 
@@ -243,25 +239,23 @@ To ensure that our comparison is working as intended.
 
 The question we have to ask about when to use explicit coercion, is does it add clarity to the reader? If the type is absolutely clear and adding something like `String()` just adds verbosity, we should avoid it. However if the type is not always clear, adding explicit type conversion will aid in readability and reducing bugs.
 
-## Exercise 2
+## Exercise 2: Coercion
 
-### Instructions
-
-In this exercise, you will define some validation functions that check user inputs (such as from DOM elements). You'll need to properly handle the coercions of the various value types.
-
-1. Define an `isValidName(..)` validator that takes one parameter, `name`. The validator returns `true` if all the following match the parameter (`false` otherwise):
-
-- must be a string
-- must be non-empty
-- must contain non-whitespace of at least 3 characters
-
-2. Define an `hoursAttended(..)` validator that takes two parameters, `attended` and `length`. The validator returns `true` if all the following match the two parameters (`false` otherwise):
-
-- either parameter may only be a string or number
-- both parameters should be treated as numbers
-- both numbers must be 0 or higher
-- both numbers must be whole numbers
-- `attended` must be less than or equal to `length`
+> In this exercise, you will define some validation functions that check user inputs (such as from DOM elements). You'll need to properly handle the coercions of the various value types.
+>
+> 1. Define an `isValidName(..)` validator that takes one parameter, `name`. The validator returns `true` if all the following match the parameter (`false` otherwise):
+>
+> - must be a string
+> - must be non-empty
+> - must contain non-whitespace of at least 3 characters
+>
+> 2. Define an `hoursAttended(..)` validator that takes two parameters, `attended` and `length`. The validator returns `true` if all the following match the two parameters (`false` otherwise):
+>
+> - either parameter may only be a string or number
+> - both parameters should be treated as numbers
+> - both numbers must be 0 or higher
+> - both numbers must be whole numbers
+> - `attended` must be less than or equal to `length`
 
 ```js
 // TODO: write the validation functions
@@ -304,12 +298,603 @@ console.log(hoursAttended("6.1", 10) === false);
 console.log(hoursAttended("6.1", "10.1") === false);
 ```
 
-### Solutions
-
-My Solution:
+### Exercise 2 Solution
 
 {% codepen https://codepen.io/ryanameri/pen/BaKLzLV default-tab=js %}
 
-Kyle's Solution:
+### Exercise 2 Kyle's Solution
 
 {% codepen https://codepen.io/ryanameri/pen/QWNKEGz default-tab=js %}
+
+## Double and Triple Equals
+
+Most of us have heard that `==` (or so called loose equality) checks the value whereas `===` (or so called strict equality) checks both value and the type. Unfortunately, that's not exactly true!
+
+If you're trying to understand your code, it's critical to learn how JavaScript thinks!
+
+Both double and triple equality check the type, it's just that they do different things with that information.
+
+TODO: expand by pointing to the [spec](https://www.ecma-international.org/ecma-262/11.0/index.html#sec-abstract-equality-comparison).
+
+- If the types are the same, the double equal and triple equal do exactly the same thing.
+- With triple equal, if the types are different, it will always return false without even checking the value. It will only check the value only if the types are the same.(remember that triple equal lies about NaN and -0).
+- The double equal will allow coercion when the types are not equal.
+- Like every other situation, we have to consider whether implicit coercion is helpful or not.
+- null can be coerced to undefined and vice versa, so double equal will treat them the same. It can be helpful to have one "empty" type, as opposed to two. In which case the use of double equal can be helpful.
+
+So given:
+
+```js
+let item1 = { topic: null };
+let item2 = {};
+if (
+  (item1.topic === null || item1.topic === undefined) &&
+  (item2.topic === null || item2.topic === undefined)
+) {
+  //Do something
+}
+```
+
+If we are to restrict ourselves to only using the triple equal operator, we'd have to write something like above to check to see if our two objects have a property `topic`. If however we understand our types, we can use the implicit coercion that the double operator gives us to write a much more readable version such as:
+
+```js
+let item1 = { topic: null };
+let item2 = {};
+if (item1.topic == null && item2.topic == null) {
+  //Do something
+}
+```
+
+- Another thing to remember is that double equal general prefers numbers, so if one operand is not a number, it will try and coerce it into one.
+
+This implicit coercion can be useful in writing readable code such as above. It can also be unhelpful when the coercion is almost "by accident". Let's consider this:
+
+```js
+let item1 = 42;
+let item2 = [42];
+if (item1 == item2) {
+  // this will execute but don't write code like this!
+}
+```
+
+This conditional statement will return true, but why? Why does it work?
+
+The double equal is only going to coerce primitives. If it is given a fundamental object (such as an array), it will use abstract operations to turn it into a primitive.
+
+How is an array turned into a primitive type? It's turned into a string. So `[42]` becomes `"42"`. And then as discussed, the double equality prefers to coerce values into numbers, so `"42"` becomes `42`. Now that both types are the same (numbers) it compares the values, and since they are equal, it returns true.
+
+But this type of coercion is almost an accident of JS's heritage and certainly does not help in readability of code. The JavaScript spec could have been written to stringify an array as `"[42]"` and then the statement would have been `false` (and many would argue that that form of stringifying would have been a better behaviour, alas we cannot go back and change how JavaScript works; refer to section on backwards compatibility).
+
+Implicit coercion should not be avoided at all costs, instead we need to make our types clear in our code, and then leverage coercion, like any other abstraction, when it helps our code's readability and maintainability.
+
+Kyle Simpson argues that double equals is preferable to triple equals in almost all cases. I'm not going to go that far, but I do believe that we need to know our types when coding, and when we do know our types and our code is structured so that we take care of corner cases, then double equals can live happily side by side triple equals and should be used when its implicit coercion helps readability.
+
+## Exercise 3: Equality
+
+> In this exercise, you will define a `findAll(..)` function that searches an array and returns an array with all coercive matches.
+>
+> 1. The `findAll(..)` function takes a value and an array. It returns an array.
+>
+> 2. The coercive matching that is allowed:
+>
+> - exact matches (`Object.is(..)`)
+> - strings (except "" or whitespace-only) can match numbers
+> - numbers (except `NaN` and `+/- Infinity`) can match strings (hint: watch out for `-0`!)
+> - `null` can match `undefined`, and vice versa
+> - booleans can only match booleans
+> - objects only match the exact same object
+
+```js
+// TODO: write `findAll(..)`
+
+// tests:
+var myObj = { a: 2 };
+
+var values = [
+  null,
+  undefined,
+  -0,
+  0,
+  13,
+  42,
+  NaN,
+  -Infinity,
+  Infinity,
+  "",
+  "0",
+  "42",
+  "42hello",
+  "true",
+  "NaN",
+  true,
+  false,
+  myObj,
+];
+
+console.log(setsMatch(findAll(null, values), [null, undefined]) === true);
+console.log(setsMatch(findAll(undefined, values), [null, undefined]) === true);
+console.log(setsMatch(findAll(0, values), [0, "0"]) === true);
+console.log(setsMatch(findAll(-0, values), [-0]) === true);
+console.log(setsMatch(findAll(13, values), [13]) === true);
+console.log(setsMatch(findAll(42, values), [42, "42"]) === true);
+console.log(setsMatch(findAll(NaN, values), [NaN]) === true);
+console.log(setsMatch(findAll(-Infinity, values), [-Infinity]) === true);
+console.log(setsMatch(findAll(Infinity, values), [Infinity]) === true);
+console.log(setsMatch(findAll("", values), [""]) === true);
+console.log(setsMatch(findAll("0", values), [0, "0"]) === true);
+console.log(setsMatch(findAll("42", values), [42, "42"]) === true);
+console.log(setsMatch(findAll("42hello", values), ["42hello"]) === true);
+console.log(setsMatch(findAll("true", values), ["true"]) === true);
+console.log(setsMatch(findAll(true, values), [true]) === true);
+console.log(setsMatch(findAll(false, values), [false]) === true);
+console.log(setsMatch(findAll(myObj, values), [myObj]) === true);
+
+console.log(setsMatch(findAll(null, values), [null, 0]) === false);
+console.log(setsMatch(findAll(undefined, values), [NaN, 0]) === false);
+console.log(setsMatch(findAll(0, values), [0, -0]) === false);
+console.log(setsMatch(findAll(42, values), [42, "42hello"]) === false);
+console.log(setsMatch(findAll(25, values), [25]) === false);
+console.log(
+  setsMatch(findAll(Infinity, values), [Infinity, -Infinity]) === false
+);
+console.log(setsMatch(findAll("", values), ["", 0]) === false);
+console.log(setsMatch(findAll("false", values), [false]) === false);
+console.log(setsMatch(findAll(true, values), [true, "true"]) === false);
+console.log(setsMatch(findAll(true, values), [true, 1]) === false);
+console.log(setsMatch(findAll(false, values), [false, 0]) === false);
+
+// ***************************
+
+function setsMatch(arr1, arr2) {
+  if (
+    Array.isArray(arr1) &&
+    Array.isArray(arr2) &&
+    arr1.length == arr2.length
+  ) {
+    for (let v of arr1) {
+      if (!arr2.includes(v)) return false;
+    }
+    return true;
+  }
+  return false;
+}
+```
+
+### Exercise 3 Solution
+
+{% codepen https://codepen.io/ryanameri/pen/OJNbbQR default-tab=js %}
+
+### Exercise 3 Kyle's Solution
+
+{% codepen https://codepen.io/ryanameri/pen/abNBBqP default-tab=js %}
+
+Full disclosure: I struggled for over an hour on this exercise. I ended up using the [Array.prototype.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) method to cycle through the array items, Kyle constructs the array manually and loops through it. Both methods are very similar and the the logic is pretty much identical, but that's due to the corner cases involved and the structure of the tests.
+
+The most important lesson to take away from this exercise is that, if you want to be absolutely sure that `Y` is equal to `X` and only `X`, your best option is to use `Object.is()` because any other comparison operator, including `===` has edge cases. Going through this exercise makes you aware of pretty much all these corner cases in JavaScript when dealing with coercing values from one type to the other. This should build up your confidence to not be afraid of using the double equality `==` operator, when it makes sense.
+
+## TypeScript, Flow and Type-aware linting
+
+If you are coding and you don't know your types, that is a problem. There are many different ways of solving this problem, we could solve it using style guides and linting, or we can use tools such as TypeScript.
+
+Benefits of TypeScript
+
+- Catch type-related mistakes
+- Communicate type intent
+- Allow the tooling ecosystem including VS Code to provide great IDE feedback
+
+Caveats:
+
+- Inferencing is best-guess, not a guarantee (unless you disable `any` type), so not a guarantee; which can lead to false sense of security
+- Annotations are optional (again unless you disable `any` type)
+- Any part of the codebase that isn't typed reduces uncertainty
+
+For a list of similarities and differences between TypeScript and flow, have a look at [this article](https://github.com/niieani/typescript-vs-flowtype).
+
+### Static typing pros
+
+- Make the types much more obvious
+- They look like other languages with static type system such as Java
+- Extremely popular these days and hav strong corporate backing. The investment to learn and get into them is an investment that will pay off for a long time.
+- Very sophisticated and good at inferring types
+
+### Static typing cons
+
+- They use a non-js-standard syntax (or code comments). Maybe types would be added someday to JavaScript, but if they are, it would probably look very different to TypeScript. This could be similar to ES Modules vs Common JS.
+- They require (yet another) build process, which raises the barrier to entry.
+- The type system can be intimidating to those without prior formal types experience. Once you get into advanced TypeScript with generics, the syntax will look closer to Haskell than to traditional JavaScript, again raising the barrier to entry.
+- Fundamentally against the _grain_ of JavaScript, focusing on static types instead of value types.
+
+There is a big divide there, between the things that TypeScript gives you vs how much it raises the barrier to entry and adds to tooling requirements. Static typing is not the _only_ option to knowing our types, it is _a_ solution to making sure that we know our types.
+
+## Summary of Types
+
+Whether you achieve that using static type system such as TypeScript, or we could achieve it using a strong style guide with the help of a configurable linter that enforces that strong type and embracing JavaScript's types and coercion.
+
+Code with clear types is more readable and more robust, for experienced and new developers. **tl;dr You cannot write quality JS programs without knowing the types involved**.
+
+Next up, we'll delve into _scope_, and all that _scope_ enables in JavaScript: hoisting, closure, modules.
+
+## Scope
+
+This chapter will delve more deeply into:
+
+- Nested Scope
+- Hoisting
+- Closure
+- Modules
+
+But first, what does scope mean?
+
+**Scope: where to look for things**.
+
+Every time we reference a variable, we are either reading its value, or assigning a new value to it. But first we need to figure out where to find the variable! And that requires a level of understanding of how JavaScript is _parsed_, and how it is _executed_.
+
+### JavaScript is a Compiled Language
+
+It is very common for people to think of JavaScript as a "scripting" language, i.e., statements are executed line by line. This is actually incorrect; JavaScript is a _parsed_ language, which is a form of _compilation_.
+
+To test this, execute the following JS code:
+
+```js
+let n = 10;
+if (n < 10>)
+    console.log("it is a one digit number");
+else
+    console.log("it is a two digit number");
+consle.log("Typo here!")
+```
+
+Now run the following equivalent bash script:
+
+```sh
+#!/bin/bash
+n=10
+if [ $n -lt 10 ];
+then
+echo "It is a one digit number"
+else
+echo "It is a two digit number"
+fi
+ech "Typo here!"
+```
+
+The JavaScript example won't run at all! It will throw a syntax error due to the typo. However the equivalent program, written in a traditional scripting language will print `"It is a two digit number"` first before running into the typo and showing an error as it executes statements one by one and won't see the error until it encounters it.
+
+How can JavaScript see the error even before it has run a single statement? Because the whole program is _parsed_ first by the JS engine, making JavaScript a form of a _compiled_ language. Yes, as it happens, both parts of the name of the language, the _Java_ part and the _Script_ part are misnomers. Think of the name really as another historical bug, similar to `typeof null` which returns `"object"` 😉.
+
+### JavaScript's Execution Model
+
+We won't delve into the details of JavaScript execution too much, but a simplified overview of it can be thought of as:
+
+1. JS engine is given the source code in a .js file
+2. JS engine parses the source code and turns it into an "Abstract Syntax Tree" (AST). This is the first processing.
+3. The AST is given to a virtual machine, which translates it to machine code in some fashion, either directly compiling it or using JIT. This is the second processing.
+   ![Sample V8 Execution Path](assets/v8-execution.png)
+
+So when we think of JavaScript execution, we have to think of our code being processed twice. Once it is parsed and turned into AST, and then the AST is executed and turned into machine code.
+
+It's pretty important to keep this mental model in mind in order to understand how scope works.
+
+When the JS engine is parsing our code (first processing), it effectively divides our code into _chunks_. Traditionally in JavaScript, only functions were broken into chunks. ES6 also introduced _blocks_ (represented by `{}`) which are also broken into chunks. So in modern JavaScript, each block or functions is a chunk, and each chunk is a unit of scope.
+
+Next when the JS engine translates the AST into machine code (second processing) and encounters a variable, it can only make sense of it if the variable is defined in the current chunk (i.e., the variable is in scope). If it encounters a variable that is not in the current chunk, i.e., it is not in scope, it throws an error (in strict mode) or results in unintended behaviour (non-strict mode). <small>(We'll talk about strict vs. non-strict mode, and about scope nesting in later sections.)</small>
+
+### Scope Demo
+
+To understand this execution model, let's look at this simple demo:
+
+```js
+function firstFn() {
+  var name = "Alice";
+  console.log(name);
+}
+
+function secondFn() {
+  var name = "Ali";
+  console.log(name);
+}
+
+var name = "Ryan";
+console.log(name);
+firstFn();
+secondFn();
+```
+
+The first thing to note is that in JavaScript, everything is put into a chunk called _global_. So when the JS engine parses our code (first processing), it divides our code into three chunks: the global chunk, the firstFn chunk and the secondFn chunk.
+
+Next when the JS engine executes our code (second processing), it looks into the global chunk and encounters the variable `name`. It checks to see if the variable is defined in the current chunk. It is, so it reads its value `"Ryan"` and prints it.
+
+In the next statement, we tell the JS engine to go and look into the firstFn chunk. It runs the firstFn chunk and encounters the variable `name` there. It checks to see if it is defined in the current chunk. It is, so it reads its value `"Alice"` and prints it.
+
+When the execution of firstFn chunk is finished, the JS engine returns back to the global chunk and remembers where it was and continues from where it left off. Next we instruct it to go and execute the chunk secondFn. It goes into the secondFn chunk and encounters the variable `name` there. It checks to see if the variable is defined in the current chunk. It is, so it takes its value `"Ali"` and prints it.
+
+So the output is:
+
+```
+Ryan
+Alice
+Ali
+```
+
+We'll cover other cases (for example what happens if the JS engine doesn't find the variable in the current chunk, and what effects `let` and `const` have vs `var`) soon, but for now, if you can follow how this code is divided into three chunks when it is parsed, and how each chunk is then executed by the JS engine, you've effectively got the fundamentals of scope.
+
+### Lexical Scope
+
+In computer science, there are two types of scope: _Lexical Scope_ (a.k.a static scope) and _Dynamic Scope_. Most programming languages including JavaScript have implemented scope as lexical scope, which means that scope is determined at compile time. Some computer languages (the first being _Lisp_ I believe) have implemented scope dynamically, where scope is determined at run time. As a JavaScript developer you don't need to concern yourself with the difference between the two or how dynamic scope works. Just note that the term _lexical scope_ is the type of scope that JavaScript implements, which we went over in this section. (Wikipedia has a [good easy explanation](<https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope>) for those who want to know more).
+
+### Scope Nesting
+
+We hinted at nesting of scopes (chunks) in our previous example when we looked the global scope. In JavaScript (as in most other languages) chunks don't have to follow each other serially, they can be inside one another. So a bigger chunk can contain many smaller chunks, each of which could contain smaller chunks.
+
+The biggest chunk of them all is _global_ inside which everything else resides. In the previous example, we saw that `firstFn` and `secondFn` were chunks inside global.
+
+With this mental model in mind, it's simple to explain scope nesting: What does the JS engine do if it encounters a variable and it's not been defined in that chunk? It looks up to the outside/container chunk to see if the variable was defined there. If it was, great, it can access the variable. If not, it will continue looking at the container chunk all the way until it reaches _global_ and checks there.
+
+So let's look at this example:
+
+```js
+function firstFn() {
+  console.log(name);
+}
+
+var name = "Ryan";
+console.log(name);
+firstFn();
+```
+
+When the code is parsed, it is divided into two chunks, a _global_ chunk and a `firstFn` chunk that resides inside _global_. Then when the program is executed, the JS engine runs the _global_ chunk and encounters the variable `name`. It checks to see if `name` is defined in the current chunk. It is so it reads its value `"Ryan"` and prints it. Next it executes the `firstFn` chunk. Inside the firstFn chunk the JS engine encounters the variable `name`. It checks to see if it is defined in the current chunk. It is not, so the JS engine looks at the container chunk (which here is _global_) to see if `name` was defined there. It is, so it reads its value and prints it. So the output is:
+
+```
+Ryan
+Ryan
+```
+
+### Automatic _Global_ variable creation
+
+Here we encounter one of JavaScript's really _bad parts_, automatic global variable creation. To understand it, let's look at this example:
+
+```js
+function firstFn() {
+  name = "Alice";
+  console.log(name);
+  profession = "doctor";
+  console.log(profession);
+}
+
+var name = "Ryan";
+console.log(name);
+firstFn();
+console.log(name);
+console.log(profession);
+```
+
+As with the previous example, when the code is parsed, it is divided into two chunks, a _global_ chunk and a `firstFn` chunk that resides inside _global_. Then when the program is executed, the JS engine runs the _global_ chunk and encounters the variable `name`. It checks to see if `name` is defined in the current chunk. It is so it reads its value `"Ryan"` and prints it. Next it executes the `firstFn` chunk. Inside the firstFn chunk the JS engine encounters the variable `name`. It checks to see if it is defined in the current chunk. It is not, so the JS engine looks at the container chunk (which is _global_) to see if `name` was defined there. It is, so it changes its value to `"Alice"` and prints it.
+
+Next it encounters the variable `profession`. It checks to see if it is declared in the current chunk, it is not. It then looks outside into the container chunk to see if it was defined there. It is not. Here is where things get messy! When JavaScript was devised in the early 90s, its designers wanted programmers to face as few errors as possible, so instead of throwing an error here, they said, once you are in the global scope and if you are accessing a variable that has not been defined, we'll helpfully create it for you (behind the scenes) so you can use it. As a result of this line, a variable called `profession` is created in _global_ scope, and the value `"doctor"` is assigned to it, and it is printed.
+
+We then head back into global chunk. The variable `name` is read, and since its value was changed to `"Alice"`, this time `"Alice"` is printed. Then the variable `profession` is read, and since it was created in global scope and its value set to `"doctor"`, that is printed. So the output is:
+
+```
+Ryan
+Alice
+doctor
+Alice
+doctor
+```
+
+This automatic global variable creation is rather unfortunate, since instead of being helpful as the original designers intended, it leads to a lot of bugs and a lot of unintended side effects. But unfortunately we can't fix it since fixing it we'll break JavaScript's backwards compatibility. **NEVER** intentionally declare a variable in this method.
+
+We'll see how to tame this behaviour by using _strict mode_ in the next section.
+
+### Strict Mode
+
+Let's consider the example in the previous section, with one tiny modification:
+
+```js
+"use strict";
+function firstFn() {
+  name = "Alice";
+  console.log(name);
+  profession = "doctor";
+  console.log(profession);
+}
+
+var name = "Ryan";
+console.log(name);
+firstFn();
+console.log(name);
+console.log(profession);
+```
+
+Strict mode was added to JavaScript in ES5. When we add the string `"use strict"` as the first line of our program, we instruct the JS engine to disable this automatic global variable creation behaviour.
+
+The parsing and execution chain is exactly the same as in the previous section so I won't repeat it here. The program is divided into two chunks, _global_ and `firstFn`.And the first two lines, `"Ryan"` and `"Alice"` are printed exactly as before. However next we come to the line `profession = "doctor";`. Here the JS engine encounters the variable `profession`. It checks to see if has been declared in the current chunk. It isn't so it moves to the container chunk _global_ to see if it is defined there. It isn't. Now instead of automatically creating the variable in global scope, the JS engine will throw an error.
+
+This behaviour is much preferred and you should always use strict mode when creating new code. ES6 enabled the JS engine to use strict mode in some other contexts as well even without the explicit `"use strict"` directive. Some tools such as babel will also implicitly insert "use strict" into your code so if you are using such transpilers, your code will most probably run in strict mode. But JavaScript is itself run in non-strict (a.k.a sloppy) mode, and that behaviour will probably never change to preserve backwards compatibility with old code.
+
+### Function Expression & Declaration
+
+Up to this point, when we've been talking about scope, we've only addressed variables. But in JavaScript, functions are also identifiers so the rules of scope, i.e., what is defined where apply to functions as well in exactly the same way. However there the rules of scope differ when a function is declared vs. when a function is expressed. Let's have a look at what each one means.
+
+#### Function Declaration
+
+The examples we have used up to this point have all used function declaration. To demonstrate, the following example:
+
+```js
+function firstFn() {
+  console.log(name);
+}
+
+var name = "Ryan";
+console.log(name);
+firstFn();
+```
+
+The functions `firstFn` is here declared and it gets its own scope, as we have discussed.
+
+#### Function Expression
+
+```js
+var fun = function firstFn() {
+  firstFn(); // Works
+  console.log(name);
+};
+
+var name = "Ryan";
+console.log(name);
+fun();
+firstFn(); /// Error
+```
+
+This style of writing functions (which is increasingly popular and generally used with the `const` keyword as opposed to `var`) is called function expression. The key thing to note here is that while `fun` is in _global_ scope, `firstFn` gets its own scope and is not in _global_ scope. So while we can access `furstFn` from inside its own scope, if we were to reference `firstFn` in global scope, we would get an error.
+
+This method of expressing a function is called a _Named Function Expression_. Since we seldom use the name of the expressed function, we can also omit it and create an _Anonymous Function Expression_ such as:
+
+```js
+var fun = function () {
+  console.log(name);
+};
+
+var name = "Ryan";
+console.log(name);
+fun();
+```
+
+As our function is now doesn't have a name, we can't reference it even from within its own scope. ES6 introduced the arrow syntax which allows us to write anonymous functions as:
+
+```js
+var fun = () => {
+  console.log(name);
+};
+
+var name = "Ryan";
+console.log(name);
+fun();
+```
+
+Dropping the `function` keyword altogether <small>(arrow functions do change some other behaviours in terms of binding and the `this` keyword which we'll cover in a later section)</small>.
+
+While this style is shorter and increasingly popular, there are benefits to naming our functions:
+
+1. Allows us to self-reference the function (used in recursion or to access properties of the function).
+2. More debuggable stack traces (though modern debugging tools do a lot of inferencing)
+3. More self-documenting code. Makes the purpose of the function explicit.
+
+## Exercise 4: Function Expressions
+
+> ### Part 1
+>
+> In this exercise, you will be writing some functions and function expressions, to > manage the student enrolment records for a workshop.
+>
+> **Note:** The spirit of this exercise is to use functions wherever possible and > appropriate, so consider usage of array utilities `map(..)`, `filter(..)`, `find(..)`, > `sort(..)`, and `forEach(..)`.
+>
+> **Note:** In Part 1, use only function declarations or named function expressions.
+>
+> You are provided three functions stubs -- `printRecords(..)`, `paidStudentsToEnroll()>`, and `remindUnpaid(..)` -- which you must define.
+>
+> At the bottom of the file you will see these functions called, and a code comment > indicating what the console output should be.
+>
+> 1. `printRecords(..)` should:
+>
+>    - take a list of student Ids
+>    - retrieve each student record by its student Id (hint: array `find(..)`)
+>    - sort by student name, ascending (hint: array `sort(..)`)
+>    - print each record to the console, including `name`, `id`, and `"Paid"` or `"Not > Paid"` based on their paid status
+>
+> 2. `paidStudentsToEnroll()` should:
+>
+>    - look through all the student records, checking to see which ones are paid but > **not yet enrolled**
+>    - collect these student Ids
+>    - return a new array including the previously enrolled student Ids as well as the > to-be-enrolled student Ids (hint: spread `...`)
+>
+> 3. `remindUnpaid(..)` should:
+>    - take a list of student Ids
+>    - filter this list of student Ids to only those whose records are in unpaid status
+>    - pass the filtered list to `printRecords(..)` to print the unpaid reminders
+>
+> ### Part 2
+>
+> Now that you've completed Part 1, refactor to use **only** `=>` arrow functions.
+>
+> For `printRecords(..)`, `paidStudentsToEnroll()`, and `remindUnpaid(..)`, assign these > arrow functions to variables of such names, so that the execution still works.
+>
+> As the appeal of `=>` arrow functions is their conciseness, wherever possible try to > use only expression bodies (`x => x.id`) instead of full function bodies (`x => { > return x.id; }`).
+
+```js
+function printRecords(recordIds) {
+  // TODO
+}
+
+function paidStudentsToEnroll() {
+  // TODO
+}
+
+function remindUnpaid(recordIds) {
+  // TODO
+}
+
+// ********************************
+
+var currentEnrollment = [410, 105, 664, 375];
+
+var studentRecords = [
+  { id: 313, name: "Frank", paid: true },
+  { id: 410, name: "Suzy", paid: true },
+  { id: 709, name: "Brian", paid: false },
+  { id: 105, name: "Henry", paid: false },
+  { id: 502, name: "Mary", paid: true },
+  { id: 664, name: "Bob", paid: false },
+  { id: 250, name: "Peter", paid: true },
+  { id: 375, name: "Sarah", paid: true },
+  { id: 867, name: "Greg", paid: false },
+];
+
+printRecords(currentEnrollment);
+console.log("----");
+currentEnrollment = paidStudentsToEnroll();
+printRecords(currentEnrollment);
+console.log("----");
+remindUnpaid(currentEnrollment);
+
+/* Output Should be: 
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+```
+
+### Exercise 4 Solutions
+
+#### My Solution Part 1
+
+{% codepen https://codepen.io/ryanameri/pen/mdPOvVZ default-tab=js %}
+
+#### My Solution Part 2
+
+{% codepen https://codepen.io/ryanameri/pen/NWNboNN default-tab=js %}
+
+#### Kyle's Solution Part 1
+
+{% codepen https://codepen.io/ryanameri/pen/poyNGye default-tab=js %}
+
+#### Kyle's Solution Part 2
+
+{% codepen https://codepen.io/ryanameri/pen/Vwamgag default-tab=js %}
+
+As can be seen, each solution has its own pros and cons. Using arrow functions and anonymous functions certainly condenses the code and more importantly it inserts the _utility_ function exactly where the action is happening, so our eyes don't have to dart across different parts of the page to follow the execution.
+
+However giving an explicit name to our functions allows us to take a moment to ponder what our function's job actually is, and that can lead to us writing more succinct and single-purpose functions. It also aids in debugging by allowing us to follow the stack trace easier. Finally, declaring functions can decouple the logic of the function from the nitty gritty details of its implementation. For example if you compare the `printRecords` function in my two solutions, you can see that in solution 1 it's much easier to follow the logic since there are only a few high level instructions and the details of for example how each student record is printed is hidden away (in a function in the utility section). This allows us to be able to follow the logic of our program easier, and also enables us to refactor our utility functions later on in an easier fashion since they stand by themselves.
+
+Each method has its own benefits and drawbacks, and as always the _right_ solution is probably somewhere in between. But the increasing popularity of arrow functions, where some people think that functions _only_ have to be written as arrow functions and using the _function_ keyword is somehow deprecated or discouraged is also incorrect. Declaring our functions separately and naming them explicitly has certain merits. As always, engineering is a series of making decisions between various trade offs, and it's upon us as authors of our code to make the right call on where the balance is in each case.
