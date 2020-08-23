@@ -2,6 +2,11 @@
 
 In this series, we'll do a deep dive into the foundations of JavaScript. This series is geared towards the intrepid web developer who has a fair understanding of using JavaScript and wants to delve a bit more into its internals to see how it _really_ works. If you've been able to follow my [Mastering Hard Parts of JavaScript](https://dev.to/ryanameri/mastering-hard-parts-of-javascript-callbacks-i-3aj0) series, you're good to go!
 
+- What exactly is the difference between `==` and `===`? _(hint: if you think that `==` doesn't check the types, you are wrong!)_
+- Why was `let` and `const` introduced in JavaScript and what do they actually do?
+- What's the difference between a function declaration and function expression? What is this "hoisting" you keep seeing and why is it different between a function declaration and a function expression?
+- Where should you use arrow functions and where should you avoid them?
+
 The blog series is based on [Kyle Simpson's](https://twitter.com/getify?lang=en) excellent [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on Frontend Masters. The slides for the course are freely available [here](https://static.frontendmasters.com/resources/2019-03-07-deep-javascript-v2/deep-js-foundations-v2.pdf).
 
 Though the content and the presentation are my own, this blog series owes a heavy debt to Getify for his excellent structure of material and for obviously being the _source of truth_ when it comes to JavaScript. I'd highly encourage everyone take the course if they can and to read his [You Don't Know JS](https://github.com/getify/You-Dont-Know-JS) book series.
@@ -618,10 +623,6 @@ Ali
 
 We'll cover other cases (for example what happens if the JS engine doesn't find the variable in the current chunk, and what effects `let` and `const` have vs `var`) soon, but for now, if you can follow how this code is divided into three chunks when it is parsed, and how each chunk is then executed by the JS engine, you've effectively got the fundamentals of scope.
 
-### Lexical Scope
-
-In computer science, there are two types of scope: _Lexical Scope_ (a.k.a static scope) and _Dynamic Scope_. Most programming languages including JavaScript have implemented scope as lexical scope, which means that scope is determined at compile time. Some computer languages (the first being _Lisp_ I believe) have implemented scope dynamically, where scope is determined at run time. As a JavaScript developer you don't need to concern yourself with the difference between the two or how dynamic scope works. Just note that the term _lexical scope_ is the type of scope that JavaScript implements, which we went over in this section. (Wikipedia has a [good easy explanation](<https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope>) for those who want to know more).
-
 ### Scope Nesting
 
 We hinted at nesting of scopes (chunks) in our previous example when we looked the global scope. In JavaScript (as in most other languages) chunks don't have to follow each other serially, they can be inside one another. So a bigger chunk can contain many smaller chunks, each of which could contain smaller chunks.
@@ -712,7 +713,7 @@ The parsing and execution chain is exactly the same as in the previous section s
 
 This behaviour is much preferred and you should always use strict mode when creating new code. ES6 enabled the JS engine to use strict mode in some other contexts as well even without the explicit `"use strict"` directive. Some tools such as babel will also implicitly insert "use strict" into your code so if you are using such transpilers, your code will most probably run in strict mode. But JavaScript is itself run in non-strict (a.k.a sloppy) mode, and that behaviour will probably never change to preserve backwards compatibility with old code.
 
-### Function Expression & Declaration
+### Function Expression vs. Declaration
 
 Up to this point, when we've been talking about scope, we've only addressed variables. But in JavaScript, functions are also identifiers so the rules of scope, i.e., what is defined where apply to functions as well in exactly the same way. However there the rules of scope differ when a function is declared vs. when a function is expressed. Let's have a look at what each one means.
 
@@ -898,3 +899,234 @@ As can be seen, each solution has its own pros and cons. Using arrow functions a
 However giving an explicit name to our functions allows us to take a moment to ponder what our function's job actually is, and that can lead to us writing more succinct and single-purpose functions. It also aids in debugging by allowing us to follow the stack trace easier. Finally, declaring functions can decouple the logic of the function from the nitty gritty details of its implementation. For example if you compare the `printRecords` function in my two solutions, you can see that in solution 1 it's much easier to follow the logic since there are only a few high level instructions and the details of for example how each student record is printed is hidden away (in a function in the utility section). This allows us to be able to follow the logic of our program easier, and also enables us to refactor our utility functions later on in an easier fashion since they stand by themselves.
 
 Each method has its own benefits and drawbacks, and as always the _right_ solution is probably somewhere in between. But the increasing popularity of arrow functions, where some people think that functions _only_ have to be written as arrow functions and using the _function_ keyword is somehow deprecated or discouraged is also incorrect. Declaring our functions separately and naming them explicitly has certain merits. As always, engineering is a series of making decisions between various trade offs, and it's upon us as authors of our code to make the right call on where the balance is in each case.
+
+## Lexical & Dynamic Scope
+
+### Lexical Scope
+
+In computer science, there are two types of scope: _Lexical Scope_ (a.k.a static scope) and _Dynamic Scope_. Most programming languages including JavaScript have implemented scope as lexically, which means that scope is determined at compile time. As the author of code, you dictate scope by where you declare your variables and how you nest functions (or blocks) inside each other. When the parser goes through the source code (first processing), it determines the scope of each variable based on this information. At runtime (second processing) a variable's scope is already pre-determined.
+
+Lexical scope has the advantage that scope is generally much easier to follow (and debug) in source code, as well as performance benefits. By being able to determine the scope beforehand by parsing the code, significant optimisations can be made by the JS engine to our code.
+
+### Lexical Scope Demo
+
+Let's have a look at a simple example:
+
+```js
+let str = "begin";
+console.log(`start: str=${str}`);
+
+function inner() {
+  console.log(`inner: str=${str}`);
+}
+
+function outer() {
+  let str = "outer";
+  inner();
+}
+
+outer();
+console.log(`end: str=${str}`);
+```
+
+This should look familiar to us as there's nothing fundamentally new. What do you think will be the output of this code? It is:
+
+```
+"start: str=begin"
+"inner: str=begin"
+"end: str=begin"
+```
+
+The scope of the variable `str` is determined by where the variable is declared. So when we reference the variable in the `inner` function, the JS engine looks in the scope of inner to see if it can find `str`. It can't, so it looks at the outer scope which is _global_ and finds the variable there and takes its value which is "begin" and prints it.
+
+In the case of lexical scoping, we have already pre-determined the value of our variables based on where they are declared in our code, and the rules of nested scoping.
+
+### Dynamic Scope
+
+Some computer languages (such as bash or early versions of Lisp) have implemented scope dynamically, where scope is determined at run time not based on where a variable has been declared, but based on the value of the variable in the function that has called the current function that is being executed. This sounds complicated but a simple example should clarify it.
+
+### Dynamic Scope Demo
+
+The following bash script is equivalent to the previous JavaScript code, so don't worry if you don't know bash/shell scripts, you should be able to follow it:
+
+```sh
+
+str="begin"
+
+echo "start: str=$str"
+
+function inner {
+	echo "inner: str=$str"
+}
+
+function outer {
+	local str="outer"
+	inner
+}
+
+outer
+
+echo "end: str=$str"
+```
+
+The output would be:
+
+```
+start: str=begin
+inner: str=outer
+end: str=begin
+```
+
+Because the value of `str` in the `inner` function is determined not based on what its value is in the _global_ scope, but based on what its value is in the function that called `inner`.
+
+Dynamic Scope has the advantage that it gives our functions a lot more flexibility. Our function can basically behave differently based on where it was called from, making them much more reusable. Dynamic scope however is generally harder to debug since most programmers aren't accustomed to its intricacies. It is also pretty impossible to optimise therefore suffers performance penalties.
+
+JavaScript is a lexically scoped language (unlike what some might say). However it does have mechanisms (namely closure) that enable it to have many of the benefits of dynamically scoped languages while still being optimisable and performant. We'll cover closure more in a future section. For those who want to know about dynamic vs lexical scope, Wikipedia has a [good easy explanation](<https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope>).
+
+## Function Scoping
+
+Traditionally in JavaScript, the scope of a variable was only bound by the function it was in. Take this simple example:
+
+```js
+var name = "Ryan";
+// Do some other things
+console.log(name);
+```
+
+Since everything is in global scope, of course when we access name, it takes its value from the current scope and prints "Ryan". However, say many years later, another developer looks at this code, and since our function is long, can't see that we have already declared a variable name. So they declare it again for something they need to use it and leave the rest of the code untouched:
+
+```js
+var name = "Ryan";
+///200 lines later another developer comes and adds
+var name = "Sarah";
+console.log(name); /// prints sarah
+/// 200 lines later, we reach our original console.log
+console.log(name); //except now it prints Sarah not Ryan as the original developer intended... oops!
+```
+
+As we can see, their additions in the middle of our function have changed the behaviour of our code later on. Before ES6, the only way our developer could avoid introducing errors like this was by declaring another function:
+
+```js
+var name = "Ryan";
+///200 lined later, developer comes and adds this function
+function anotherName() {
+  var name = "Sarah";
+  console.log(name);
+}
+anotherName(); //then they have to call their function to run it;
+/// Now we get to our original code, and it works as intended
+console.log(name); //prints Ryan
+```
+
+The second developer is implementing a computer science principle here called "The Principle of Least Privilege" by basically hiding the internal workings of their code from the outside world. This is great, but our second developer had to write a lot of additional code. Furthermore, they had to create and declare a function that they have no intention of reusing again. They just had to create `anotherName` to avoid name collisions.
+
+### IFFE
+
+Around 2011 or so, JavaScript developers came up with the concept of _Immediately Invoked Function Expression_ or IFFE. IFFE in effect uses the rules of scope of JavaScript, wraps a function in parentheses (turning it from a function declaration into a function expression) and immediately executes it. So the previous example becomes:
+
+```js
+var name = "Ryan";
+///Now the 2nd developer creates an IFFE instead
+(function anotherName() {
+  var name = "Sarah";
+  console.log(name);
+})(); //and calls it strait away.
+/// Finally when we get to our original code, and it works as intended
+console.log(name); //prints Ryan
+```
+
+This patten was very common in the JavaScript world from around 2011 until 2015 or so and you might still run into it especially in older codebases (you'll probably see it more often as an anonymous function without a name). There is nothing wrong with this pattern, it achieves the benefits of hiding the implementation details from the outside code, but it certainly is not elegant. Thankfully block scoping was introduced in ES6, providing us much better tools for this purpose.
+
+## Block Scoping
+
+ES6 introduced block scoping to JavaScript. Simply put, block scoping puts the boundaries of the scope where `{}` are located.
+
+It's important to note that putting `{}` by itself doesn't make a block. The _chunk_ of code only becomes a scope if either the keywords `let` or `const` are located inside the chunk.
+
+Because `var` was previously only bound by function scoping, and JavaScript designers did not want to change its behaviour and break old code (refer to section on backwards compatibility), var still does not observe block scoping and is only bound by function scope.
+
+And this difference in scope is the main difference between `var` with `let` and `const`. Now we know why these two new ways of declaring variables were added to JavaScript. With these new tools, we can write our previous IFFE example as:
+
+```js
+var name = "Ryan";
+///Now the 2nd developer add this block
+{
+  let name = "Sarah";
+  console.log(name); //prints Sarah
+}
+/// Finally when we get to the old code, it works as intended
+console.log(name); //prints Ryan
+```
+
+No need to create a function and execute it straightaway anymore now that we have block scoping! So much more elegant.
+
+Do take note that if the second developer had used `var` instead of `let`, a block scope would not have been created and our code would have had the original error:
+
+```js
+var name = "Ryan";
+///Now the 2nd developer add this block
+{
+  var name = "Sarah";
+  console.log(name); //prints Sarah
+}
+/// Finally when we get to the old code
+console.log(name); //prints Sarah... oops!
+```
+
+This pattern of adding extra `{}` just to create a block scope is not super popular in the JavaScript world. Most developers observe the effects of block scoping when they create a `for` loop or when they use `try` and `catch` which all have `{}`. However in some other programming environments such as Java, this pattern is pretty popular, and if we are to follow the principle of least privilege, it makes sense and is best practice to wrap variables that are only needed for a few lines in `{}` so that they are hidden from the outside code and we reduce the chances of introducing bugs in our code.
+
+### `let` vs. `var`
+
+If your first introduction to JavaScript has been in the past few years, you've probably seen and heard that `let` is the new `var` and that you should avoid using `var` and you'll only encounter it in old code.
+
+While `let` (and `const`, we'll cover `const` more in the next section) are definitely a lot more hot than `var`, as we have seen, they have fundamentally different behaviour when it comes to scope. They are not replacements of `var`, rather they are new tools that can augment our usage of `var`. As authors of our code, we can leverage these tools to communicate our intention better in our code. `let` and `var` are tools that can effectively be used side by side. Consider the following example:
+
+```js
+function lookupRecord(searchStr) {
+  try {
+    let id = getRecord(searchStr);
+  } catch (err) {
+    let id = -1;
+  }
+  return id;
+}
+```
+
+This doesn't work! The variable `id` is created by either the `try` statement or the `catch` statement, but it is bound to the block and so when we try and return it, it is out of scope, resulting in an error. In order to use `let`, we'd have to declare the variable first and then use it:
+
+```js
+function lookupRecord(searchStr) {
+  let id;
+  try {
+    id = getRecord(searchStr);
+  } catch (err) {
+    id = -1;
+  }
+  return id;
+}
+```
+
+This works, but now we have separated our declaration from our assignment. Imagine if there are a few dozen lines between the declaration and assignment, now our eyes have to dart across the page to know whether we've declared it previously or not, which makes our code less readable and more error prone.
+
+Imagine if we had used `var`:
+
+```js
+function lookupRecord(searchStr) {
+  try {
+    var id = getRecord(searchStr);
+  } catch (err) {
+    var id = -1;
+  }
+  return id;
+}
+```
+
+This works, because unlike `let`, `var` is not bound by block scope but by function scope, so when are returning it, it's still in scope. And we have managed to keep our variable declaration and assignment together, making it easier to follow the execution path.
+
+There is also, a semantic difference between `let` and `var`. `var` is and has always been bound to function scope, whereas `let` is bound to block scope. We can use this difference to make our intention for the usage of our variable clearer to someone who will be reading our code in the future. If there is a variable that will be used throughout the function, use `var` to declare it. If there is a variable that is only going to be used for a few lines, such as the increment variable of a `for` loop, use `let` to ensure that it's only used in that block. That way when someone reads our code in future, our intentions of where we intend to use this variable are instantly communicated, making our code more self-documenting.
+
+Like everything else in this series, like `==` vs `===`, like function expression vs declaration, `let` and `var` are tools that provide us with different capabilities. Instead of making blanket statements of only using one or the other, we can learn how our tools work and use them to communicate our intentions effectively.
+
+### Where to Use `const`
+
+There are two schools of thoughts, those who believe that we should declare all our variables by default as `const` (and leave `let` only for variables that definitely change value such as the incriminator of a `for` loop), and those who believe that we should adhere to the semantic meaning of `const`, that `const` is short for _constant_ and we should reserve it for variables whose value will absolutely never change. Let's see the pros and cons of each school here.
