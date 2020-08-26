@@ -30,7 +30,7 @@ We'll cover the following "Pillars of JavaScript" in this series:
    - Modules
 3. Objects
    - this
-   - class {}
+   - class
    - Prototypes
    - Object Oriented vs. OLOO
 
@@ -192,7 +192,7 @@ console.log("testing".toUpperCase());
 
 ## Intentional/Explicit Coercion
 
-We'll use the terms coercion and conversion interchangeable here, though from a CS point of view there can be minor differences between the two. This concept is also called "casting" in some other languages.
+We'll use the terms coercion and conversion interchangeably here, though from a CS point of view there can be minor differences between the two. This concept is also called "casting" in some languages.
 
 Unlike what some others advocate, as a web developer, you cannot simply avoid coercion and conversion. You have to embrace it, making sure that the types involved in any operation are clear. Yes there are corner cases, but they can be safely managed by learning them, instead of avoiding them.
 
@@ -981,7 +981,7 @@ Because the value of `str` in the `inner` function is determined not based on wh
 
 Dynamic Scope has the advantage that it gives our functions a lot more flexibility. Our function can basically behave differently based on where it was called from, making them much more reusable. Dynamic scope however is generally harder to debug since most programmers aren't accustomed to its intricacies. It is also pretty impossible to optimise therefore suffers performance penalties.
 
-JavaScript is a lexically scoped language (unlike what some might say). However it does have mechanisms (namely closure) that enable it to have many of the benefits of dynamically scoped languages while still being optimisable and performant. We'll cover closure more in a future section. For those who want to know about dynamic vs lexical scope, Wikipedia has a [good easy explanation](<https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope>).
+JavaScript is a lexically scoped language (unlike what some might say). However it does have mechanisms (namely closure and `this`) that enable it to have many of the benefits of dynamically scoped languages while still being optimisable and performant. We'll cover closure and `this` more in a future section. For those who want to know about dynamic vs lexical scope, Wikipedia has a [good easy explanation](<https://en.wikipedia.org/wiki/Scope_(computer_science)#Lexical_scope_vs._dynamic_scope>).
 
 ## Function Scoping
 
@@ -1250,7 +1250,7 @@ const catName = (name) => {
 };
 ```
 
-### `let` and `const` and hoisting
+### `let` , `const` and hoisting
 
 You may have heard that `let` and `const` don't hoist, i.e., a variable declared with these two keywords isn't hoisted. This is technically incorrect, but practically correct! Remember when we mentioned that `undeclared` and `undefined` are different states, and that they in turn are different from `TDZ` (Temporal Dead Zone)? What's TDZ you asK? Let's dive a little into this.
 
@@ -1367,6 +1367,315 @@ remindUnpaid(currentEnrollment);
 
 {% codepen https://codepen.io/ryanameri/pen/xxVqWGQ default-tab=js %}
 
-It can easily be seen that the two styles are different but do exactly the same thing. Using function declaration gives us hoisting, and this allows us to write executable part of our program, the _logic_ of our code at the top and easily follow its execution without being encumbered by various utility functions.
+It can easily be seen that the two styles are different but do exactly the same thing. Using function declaration gives us hoisting, and this allows us to write the executable part of our program, the _logic_ of our code at the top and easily follow its execution without being encumbered by various utility functions. The other benefit is that the structure of our scope is a lot flatter, it is easy to see exactly where each scope starts and ends.
 
-On the other hand, the second example using arrow functions is a lot less verbose. It allows us to achieve the same outcome using fewer lines of code. However we do have to be conscious that we can't use our utility functions for example `getStudentFromId` before initialising them first.
+On the other hand, the second example using nested arrow functions is a lot less verbose. It allows us to achieve the same outcome using fewer lines of code. And it allows the whole program to be read without our eyes darting across the page. However some would argue that this style is less readable, and nesting of functions inside one another makes it easier to confuse their scope. We also have to be aware of the difference between declaration and expression: we can't use our utility functions for example the `getStudentFromId` function before initialising them first.
+
+## Closure
+
+### Origins of Closure
+
+The story goes that, in the mid 90s, Netscape decided to add a programming language to their browser (Navigator) to give it dynamic abilities. At the time Java was the new hot thing straight out of Sun Microsystems and most brilliant minds in the industry believed that all future code would be written in Java. Netscape wasn't sure if adding Java to Navigator was doable, so they lead a two-pronged approach: collaborating with Sun to add Java to Navigator while at the same time hiring Brendan Eich to add Scheme (a variant of Lisp, a functional programming language) to the browser as a backup option.
+
+It soon became apparent that adding Java inside Navigator wasn't possible, so Netscape's management decided to instead to task Eich with creating a new scripting language that _"looked"_ like Java. Eich created JavaScript, which had a certain superficial resemblance to the Java of the time, but he incorporated many of Scheme's ideas directly into JavaScript. Hence why JavaScript looks like Java but at its heart implements many functional programming ideas natively, chief amongst them Closure. JavaScript, in many respects, has a lot more in common with a functional programming language like Scheme than it does with Java or C++. JavaScript was one of the first "non-academic" languages that natively implemented Closure. But what is Closure?
+
+Closure is a mathematical idea that, predates all programming languages and even computer science itself. Closures first appeared in λ-calculus (Lambda calculus) which was developed in 1930s by Alonzo Church. And yet it took over 50 years for Closure to move from academic circles and find an application in everyday programming. Instead of pondering on the academic definition of closure, we'll focus on what it achieves in JavaScript. It turns out that we need a good understanding of lexical scope in order to understand closure. Good thing we've already got that covered!
+
+Dan Abramov [defines closure](https://whatthefuck.is/closure) as:
+
+> "You have a closure when a function accesses variables defined outside of it."
+
+Kyle Simpson elaborates more in his definition:
+
+> "Closure is when a function _remembers_ its lexical scope even when the function is executed outside that lexical scope".
+
+Great! But what does it all mean? Let's demonstrate with some simple code:
+
+```js
+function createFunctionPrinter(input) {
+  function printInput() {
+    console.log(input);
+  }
+  return printInput;
+}
+const myFun = createFunctionPrinter("Hello!");
+myFun();
+```
+
+Let's go over this code together. We first define a function `createFunctionPrinter`. Notice that this function takes an argument as `input` and returns another function. So when we first execute `createFunctionPrinter` it doesn't print anything. It just returns us a function, and we assign that function to the variable `myFun`.
+
+Next we run `myFun`. It executes the body of the function that was previously known as `printInput`. `printInput` doesn't take any arguments and doesn't return anything, it just prints something to console. So when we run myFun, that's what happens, it just prints something to console. What's that something that gets printed? The `input` that was originally given to `createFunctionPrinter`.
+
+But `createFunctionPrinter` had already executed, it had ran its course and was presumably garbage collected. So how come `myFun` is able to access the parameter `input` that was passed to `createFunctionPrinter`? It turns out that when we returned `printInput`, we didn't just return that function, we also returned all the variables that are in its outside scope; i.e., its _lexical scope_.
+
+When you have a language that has higher ordered functions (functions can be given to other functions as parameters or returned from other functions) and lexical scope, closure makes our programming language a lot more flexible and useful. In effect it gives similar level of flexibility that Dynamic Scope provides: being able to reuse functions and have them perform different tasks based on the contexts that they were called from.
+
+Let's look at another example:
+
+```js
+let name = "Ryan";
+const printName = () => {
+  console.log(name);
+};
+printName(); // Prints Ryan
+name = "Alice";
+printName(); // Prints Alice
+```
+
+Here `printName` is an arrow function, it doesn't take any arguments, it just prints the value of the variable `name` to console. Since `name` is not declared in the function itself, every time `printName` is executed, the JS engine looks at the outside scope, i.e., its _lexical scope_, which here is _global_, to see if it can find `name` there. It can! The first time we call `printName`, the value of `name` is "Ryan" so that's what gets printed. The second time `printName` is called, the value of `name` has changed to "Alice", so that is called.
+
+See how we didn't change our function at all, but our function printed something different based on the changes in the environment from which it was called. It's important to remember that `printName` doesn't "capture" a snapshot of the values that it had access to at the time of declaration, it keeps a link to its outside variables and will _see_ if the value of these variables change over time. These "outside variables" are better known as Closed over 'Variable Environment' (C.O.V.E.)
+or _Persistent Lexical Scope Referenced Data (P.L.S.R.D.)_. You can find more information about them (and lots of very interesting Closure exercises) in my [Mastering the Hard Parts of JavaScript](https://dev.to/ryanameri/mastering-hard-parts-of-javascript-closure-i-kg2) series.
+
+Closure is a simple idea but its application gives us JavaScript's main way of organising (and reusing) code: modules. Understanding modules requires understanding having a solid understanding of closure, and understanding closure requires having a solid understanding of lexical scope.
+
+## Modules
+
+At first, JavaScript was supposed to be a simple _scripting_ language. Its designers thought people would write little scripts, probably at a most a few hundred lines of code, that would add some dynamic abilities to their previously static website and call it a day. No one could foresee that one day we'd be writing complex web _applications_ like facebook or Google Maps in JavaScript, let alone use it on on our servers.
+
+Once JavaScript programs grew larger than a few hundred lines of code, and people began to wonder how to incorporate other people's code (safely) into their own, the problem of "how to organise code" became apparent. We needed to find a way to structure our programs to avoid naming collisions and other unintended errors, in a language that lacked concepts such as namespaces or modules.
+
+The first attempt to solve this problem was by using JavaScript's native flexible objects. Take:
+
+```js
+var car = {
+  brand: "Volkswagen",
+  ask(question) {
+    console.log(`${question} a ${this.brand}?`);
+  },
+  hidden() {
+    console.log(`I Love ${this.brand}`);
+  },
+};
+car.ask("Are you driving");
+// prints "Are you driving a Volkswagen?"
+```
+
+We have successfully separated our `car` from the rest of our code. It contains its own data `brand` and its own method `ask`.
+
+This however, is NOT a module. It doesn't _hide_ its internal mechanism from the outside world. A programmer can come in the future, and for example rename `car.ask` to something else. That change would break our program. _global_ can also access the method `hidden` even though this method was supposed to be hidden from the outside world. In Computer Science parlance, they say that this code does not _encapsulate_ its data.
+
+### Classic Module
+
+Next, around 2001 or so, JavaScript developers realised they could use JavaScript's closure to encapsulate data and their methods, so as to hide it from the outside world. Consider if we rewrote our previous example as:
+
+```js
+var car = (function (brand) {
+  var publicAPI = { ask };
+  return publicAPI;
+
+  function ask(question) {
+    console.log(`${question} a ${brand}?`);
+  }
+  function hidden() {
+    console.log(`I Love ${brand}`);
+  }
+})("Volkswagen");
+car.ask("Are you driving");
+// prints "Are you driving a Volkswagen?"
+```
+
+This is called the _classic_ or the _revealing_ module pattern. It was JavaScript developers' first crack at solving the modules issue. It has an outer enclosing function (in this case an anonymous IIFE) that is executed once and then it's _done_. However thanks to closure, the `ask` function (which is part of the `publicAPI` object that is returned) retains a reference to all the variables declared in the IIFE (in this case the parameter `brand`) and is able to access them.
+
+<small>Yes I'm aware that template literals did not exist in JavaScript in 2001! I'm just using them to help readability of console.log 😄</small>
+
+This pattern achieves the same functionality as in our first example, however the internal data structure of `car` is now hidden from the outside world. No one from _global_ can for example rename our `ask` method. No one from the outside world can access the hidden method, since we did not explicitly name it in our publicAPI object. The internal data structure and methods are _encapsulated_.
+
+### Module Factory
+
+In the previous example, the function which generated the module was an anonymous IIFE, it ran once and was _done_, and so it could be thought of as a _singleton_. It turns out that we can give this function a name and use a multiple times, this is how module factories were born. Consider:
+
+```js
+function CarModule(brand) {
+  var publicAPI = { ask };
+  return publicAPI;
+
+  function ask(question) {
+    console.log(`${question} a ${brand}?`);
+  }
+}
+var car = CarModule("Volkswagen");
+car.ask("Are you driving"); // prints "Are you driving a Volkswagen?"
+var car2 = CarModule("BMW");
+car2.ask("Do you like"); // prints "Do you like a BMW?"
+```
+
+Every time the function `CarModule` is run, it returns an _instance_ (in OOO parlance) of the car. We can have many such instances, and each one keeps their data to themselves without interfering with other instances. All through the power of higher-order functions and closure.
+
+### ES Modules
+
+Various other module patterns were developed by the JavaScript community throughout the years, most famously _AMD_, _UMD_ and _CommonJS_, each with their own specific formulations and pros and cons. We won't dive into each one specifically, and few new lines of code are written in these patterns these days (perhaps with the exception of CommonJS) but you might come across these in legacy codebases.
+
+Node.js adopted a variation of the CommonJS pattern for its modules, and the popularity of node.js and its module repository, _npm_ exploded in early 2010s. There was however still one problem, these were all patterns (and tools) that JavaScript developers had developed to help organise and share code. The language itself did not provide a native construct to facilitate building modules. That changed with ES6 and the introduction of ES Modules (ESM) in 2015. Things did not, however, proceed smoothly.
+
+At this point, _npm_ was the single biggest code repository ever invented, bigger than the code repositories of languages such as Python and Perl and PHP combined. And all of it was written in CommonJS. Due to a breakdown in communications between node.js and the people who were designing ES Modules (the TC39 committee), ES Modules and CommonJS are pretty incompatible. Eventually a lot of very smart folks got together and formed a working group in node.js to support using ESM in node.js. This working group divided its work into multiple phases, and its first phase, which allows using ES Modules in node.js (with a few caveats) just landed in the stable branch of node.js this year in 2020, approximately 5 years after the release of ES6 and ES Modules.
+
+Going forward as JavaScript application developers, you will be writing most of your code in ES Modules (hopefully), but it's important to note that the JavaScript ecosystem of tools and transpilers and modules are still mostly written in CommonJS. It will probably be a few more years before the whole ecosystem moves to ES Modules. With that background history out of the way, let's have a look at how ES Modules work.
+
+ES6 modules specifically require modules to be in a separate file, i.e., the module and the code using the module cannot reside on the same file. So our previous example becomes:
+
+```js
+//car.mjs file
+var brand = "Volkswagen";
+export default function ask(question) {
+  console.log(`${question} a ${brand}?`);
+}
+```
+
+And then in our application:
+
+```js
+import ask from "car.mjs";
+ask("Are you driving"); //prints "Are you driving a Volkswagen?"
+```
+
+We can also write:
+
+```js
+import * as car from "car.mjs";
+car.ask("Are you driving"); ////prints "Are you driving a Volkswagen?"
+```
+
+We don't need to wrap things inside a function anymore or use closure. Because our module resides in a separate file, everything here such as the variable `brand` is hidden and private by default. The only way to make things public, the only way for code in the outside world to use our module, is for us to explicitly `export` that data structure.
+
+ES Modules are singletons, similar to our original/classic IIFE. No matter how many times you import a module, you are interacting with reference to a single data structure. If you need multiple instances of that data structure, you can use module factories (as previously discussed) or the new `class` syntax (which we'll discuss in a future section).
+
+Let's practice modules using an exercise next.
+
+## Exercise 6 : Modules
+
+> In this exercise, refactor some code that manages student enrolment records for a workshop, to use the module pattern.
+>
+> 1.  Wrap all of the functions in a module factory (ie, function named `defineWorkshop()>`). This function should make a return a public API object.
+>
+> 2.  The returned public API object should include the following methods:
+>
+>     - `addStudent(id,name,paid)`
+>     - `enrollStudent(id)`
+>     - `printCurrentEnrollment()`
+>     - `enrollPaidStudents()`
+>     - `remindUnpaidStudents()`,
+>
+> 3.  Move the `currentEnrollment` and `studentRecords` arrays inside the module definition, but as empty arrays.
+>
+> 4.  Create an instance of this module by calling `defineWorkshop()`, and name it >`deepJS`.
+>
+> 5.  Define all the student records by calling `deepJS.addStudent(..)` for each.
+>
+> 6.  Define the student enrollments by calling `deepJS.enrollStudent(..)` for each.
+>
+> 7.  Change the execution code (the console output steps) to references to `deepJS.*` public API methods.
+
+```js
+var currentEnrollment = [410, 105, 664, 375];
+
+var studentRecords = [
+  { id: 313, name: "Frank", paid: true },
+  { id: 410, name: "Suzy", paid: true },
+  { id: 709, name: "Brian", paid: false },
+  { id: 105, name: "Henry", paid: false },
+  { id: 502, name: "Mary", paid: true },
+  { id: 664, name: "Bob", paid: false },
+  { id: 250, name: "Peter", paid: true },
+  { id: 375, name: "Sarah", paid: true },
+  { id: 867, name: "Greg", paid: false },
+];
+
+printRecords(currentEnrollment);
+console.log("----");
+currentEnrollment = paidStudentsToEnroll();
+printRecords(currentEnrollment);
+console.log("----");
+remindUnpaid(currentEnrollment);
+
+/*
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+
+// ********************************
+
+function getStudentFromId(studentId) {
+  return studentRecords.find(matchId);
+
+  // *************************
+
+  function matchId(record) {
+    return record.id == studentId;
+  }
+}
+
+function printRecords(recordIds) {
+  var records = recordIds.map(getStudentFromId);
+
+  records.sort(sortByNameAsc);
+
+  records.forEach(printRecord);
+}
+
+function sortByNameAsc(record1, record2) {
+  if (record1.name < record2.name) return -1;
+  else if (record1.name > record2.name) return 1;
+  else return 0;
+}
+
+function printRecord(record) {
+  console.log(
+    `${record.name} (${record.id}): ${record.paid ? "Paid" : "Not Paid"}`
+  );
+}
+
+function paidStudentsToEnroll() {
+  var recordsToEnroll = studentRecords.filter(needToEnroll);
+
+  var idsToEnroll = recordsToEnroll.map(getStudentId);
+
+  return [...currentEnrollment, ...idsToEnroll];
+}
+
+function needToEnroll(record) {
+  return record.paid && !currentEnrollment.includes(record.id);
+}
+
+function getStudentId(record) {
+  return record.id;
+}
+
+function remindUnpaid(recordIds) {
+  var unpaidIds = recordIds.filter(notYetPaid);
+
+  printRecords(unpaidIds);
+}
+
+function notYetPaid(studentId) {
+  var record = getStudentFromId(studentId);
+  return !record.paid;
+}
+```
+
+### Solution 6: Factory Modules
+
+#### Using Factory Modules
+
+{% codepen https://codepen.io/ryanameri/pen/bGpqQeB default-tab=js %}
+
+#### Using ES Modules
+
+{% codesandbox 54s47 %}
+
+<small>Make sure you click on console to view the codesandbox embed. Also drag the vertical separator to the right to view the code. It might be better to view the embed in a new window by itself</small>.
+
+The two solutions have a lot of commonalities, but using ES modules requires a lot less extra unnecessary code in the form of a factory function. It does however mean that our module code has to be in a separate file, and then we import that file from our main application.
