@@ -1127,6 +1127,246 @@ There is also, a semantic difference between `let` and `var`. `var` is and has a
 
 Like everything else in this series, like `==` vs `===`, like function expression vs declaration, `let` and `var` are tools that provide us with different capabilities. Instead of making blanket statements of only using one or the other, we can learn how our tools work and use them to communicate our intentions effectively.
 
-### Where to Use `const`
+### The case for and against `const`
 
-There are two schools of thoughts, those who believe that we should declare all our variables by default as `const` (and leave `let` only for variables that definitely change value such as the incriminator of a `for` loop), and those who believe that we should adhere to the semantic meaning of `const`, that `const` is short for _constant_ and we should reserve it for variables whose value will absolutely never change. Let's see the pros and cons of each school here.
+There are two schools of thought when it comes to `const`:
+
+- Those who believe we should declare all our variables by default as `const`, and leave `let` only for variables that will need to change value during execution, such as the incriminator of a `for` loop
+- Those who believe that we should adhere to the semantic meaning of `const`, that `const` is short for _constant_ and we should reserve it for variables whose value will absolutely never change, i.e., are _constants_. Let's see the pros and cons of each school here.
+
+The always `const` camp argues that `using` const to restrict unavoidable reassignment of a variable is adherence to the principle of least privilege. They argue that this prevents the coder from unintentionally reassigning for example an object to a different object. For example:
+
+```js
+const hello = { a: "foo" };
+hello = { b: "bar" }; // Error!
+```
+
+Would throw a type Error since hello is a `const`.
+
+The second camp argue that `const` doesn't really prevent you from _mutating_ the object. For example in the previous example, the author could have written:
+
+```js
+const hello = { a: "foo" };
+hello.b = "bar"; //This works since we are adding a property to an object
+delete hello.a;
+```
+
+Which would have achieved the exact same result that `const` was supposedly trying to prevent.
+
+In order to fully understand what can and cannot be changed with `const` requires a good understanding of what is passed by value and what is passed by reference in JavaScript, and that is a topic that is rife with confusion especially amongst newcomers to the language.
+
+Briefly, primitive types are passed by value, for example:
+
+```js
+let firstNum = 5;
+let secondNum = firstNum;
+firstNume = 10;
+console.log(firstNum); //prints 10
+console.log(secondNum); // prints 5
+```
+
+Whereas built-in objects are passed by reference, for example:
+
+```js
+const obj1 = { first: "5" };
+const obj2 = obj1;
+obj2.first = 10;
+console.log(obj1);
+```
+
+Prints:
+
+```
+Object {
+  first: 10
+}
+```
+
+Of course this difference is well known to seasoned programmers. Anyone who has programmed in JavaScript for any significant amount of time (or any other programming language that has pass-by-reference for that matter) would be intimately familiar with these details. JavaScript programmers know that in order to prevent an object from mutating, they need to freeze it using the Object.freeze method (which is shallow freeze) or use a deep freeze method provided by one of the many third party libraries.
+
+This nuance means that semantically, `const` is a misnomer. A JavaScript newbie will find a simple example such as:
+
+```js
+const a = [5];
+a.push(10);
+```
+
+confusing, and they'd be very well within their rights to be confused! _Semantically_, if the array `a` is _constant_, why are we adding numbers to it? This confusion has lead to some programming languages (such as Java) even avoiding using the `const` keyword in their language (though using `static final` results in a similar behaviour in Java.)
+
+This group, and Kyle Simpson is certainly among them, argue that in order to avoid this confusion, `const` should only be used where it semantically makes sense, i.e., on primitive variables whose value will never change during the runtime of the program. Kyle Simpson argues that using `const` for example for an API URL, or using it for a number that has a significant _magical_ value in our program, makes perfect sense. In these instances, the author should use `const` to achieve what `const` was designed for: prevent a primitive from changing its value. Using it on objects is nonsensical.
+
+As always, I believe that the choice of which school of thought to follow is yours as an engineer/author of the code. What I think is most important is for these decisions to be made at a company/project level early on, and for these decisions to be codified in a style guide (and perhaps enforced with a linter). Both approaches have certain merits, and using the same approach throughout the codebase will make the code clearer and less error prone.
+
+## Hoisting
+
+The term _Hoisting_ is thrown around a lot in the JavaScript world to explain various phenomena that programmers find hard to explain. In reality, the term _hoisting_ only appeared in the JavaScript specification a few years ago for the first time, and that's because the JS engines actually don't do _hoisting_ per se. Hoisting is an English language term that has been used to define various side effects of JavaScript's lexical scope and its two-step execution model (i.e. parsing).
+
+But first, let's look at what is meant by hoisting:
+
+```js
+catName("Chloe");
+
+function catName(name) {
+  console.log(`My cat's name is ${name}`);
+}
+/*
+This code works. "My Cat's name is Chloe" is printed.
+*/
+```
+
+`catName` is referenced before it is declared, and this code works. It is claimed that the reason this works is due to _hoisting_, i.e., function and variable declarations are put to the top of the function when the program is run. What is actually happening, if you followed the section on JavaScript's execution model, is that declarations are kept exactly where they are on the code, however a reference to them is kept in memory during _parsing_, i.e., the first processing of the code, so in the second process, the JS engine knows where `catName` is and goes and looks for it when we reference it, even when that reference appears before the declaration in our code.
+
+Though hoisting is a by-product of JavaScript's execution model and not something JavaScript engines explicitly do, it can be a useful _mental model_. It can help make sense of the rules of lexical scoping and execution model by simply thinking that the JS engine puts those declarations at the top of the scope. We can then use hoisting to make our code more readable; for example we can put high level logic of our program at the very top of the source code and put the utility functions that it utilises near the bottom. This makes our code easier to read without being cluttered by utility functions.
+
+But it's important to keep a few caveats in mind
+
+### Only declarations are Hoisted
+
+JavaScript only hoists declarations, not initialisations. If a variable is initialised after declarations, its value will be undefined before initialisation. For example:
+
+```js
+console.log(num); //prints undefined as only declaration was hoisted not the initialisation
+var num; // Declaration
+num = 10; // Initialization
+```
+
+This also means that functions that are written as function declaration are hoisted, however those that are written as function expression (assigned to a variable) are not. So if we had written our `catName` example as:
+
+```js
+catName("Chloe"); // Error! Cannot use catName before initialisation
+
+const catName = function catName(name) {
+  console.log(`My cat's name is ${name}`);
+};
+```
+
+or as an anonymous arrow function
+
+```js
+catName("Chloe"); // Error! Cannot use catName before initialisation
+
+const catName = (name) => {
+  console.log(`My cat's name is ${name}`);
+};
+```
+
+### `let` and `const` and hoisting
+
+You may have heard that `let` and `const` don't hoist, i.e., a variable declared with these two keywords isn't hoisted. This is technically incorrect, but practically correct! Remember when we mentioned that `undeclared` and `undefined` are different states, and that they in turn are different from `TDZ` (Temporal Dead Zone)? What's TDZ you asK? Let's dive a little into this.
+
+`const` and `let` are hoisted the same way as `var` to the top of their scope (obviously `let` and `const` are only hoisted to a block whereas `var` is hoisted to its function). However the designers of JavaScript had a problem. If the value of a `const` was set to `undefined` prior to initialisation, and then that value changed after initialisation, technically that broke the rules of `const` (can't change its value!). So in ES6 they added another state: Temporal Dead Zone (TDZ). When a variable is declared with `let` or `const`, their value prior to initialisation is set to TDZ instead of `undefined`. And if you try and access a variable with the value TDZ, you'll get an error! So technically speaking `let` and `const` are hoisted similar to `var`, but practically speaking you can't access them when they are in TDZ. So you might as well think that they aren't hoisted.
+
+Those interested can find more on `let` and `const` hoisting [in the spec](https://www.ecma-international.org/ecma-262/11.0/index.html#sec-let-and-const-declarations).
+
+Let's practice Hoisting with an exercise.
+
+## Exercise 5: Hoisting
+
+### Part 1 Function Declaration & Hoisting
+
+In this exercise, refactor this to take advantage of function hoisting. Refactor all inline function expressions to be function declarations. Place function declarations at the bottom (that is, below any executable code) of their respective scopes.
+Also, pull function declarations to outer scopes if they don't need to be nested.
+
+### Part 2: Arrow Functions
+
+In Part 2, refactor the code to use only function expressions and arrow functions wherever possible. Remember that expressions are not hoisted. Compare and contrast the two styles:
+
+```js
+function getStudentFromId(studentId) {
+  return studentRecords.find(function matchId(record) {
+    return record.id == studentId;
+  });
+}
+
+function printRecords(recordIds) {
+  var records = recordIds.map(getStudentFromId);
+
+  records.sort(function sortByNameAsc(record1, record2) {
+    if (record1.name < record2.name) return -1;
+    else if (record1.name > record2.name) return 1;
+    else return 0;
+  });
+
+  records.forEach(function printRecord(record) {
+    console.log(
+      `${record.name} (${record.id}): ${record.paid ? "Paid" : "Not Paid"}`
+    );
+  });
+}
+
+function paidStudentsToEnroll() {
+  var recordsToEnroll = studentRecords.filter(function needToEnroll(record) {
+    return record.paid && !currentEnrollment.includes(record.id);
+  });
+
+  var idsToEnroll = recordsToEnroll.map(function getStudentId(record) {
+    return record.id;
+  });
+
+  return [...currentEnrollment, ...idsToEnroll];
+}
+
+function remindUnpaid(recordIds) {
+  var unpaidIds = recordIds.filter(function notYetPaid(studentId) {
+    var record = getStudentFromId(studentId);
+    return !record.paid;
+  });
+
+  printRecords(unpaidIds);
+}
+
+// ********************************
+
+var currentEnrollment = [410, 105, 664, 375];
+
+var studentRecords = [
+  { id: 313, name: "Frank", paid: true },
+  { id: 410, name: "Suzy", paid: true },
+  { id: 709, name: "Brian", paid: false },
+  { id: 105, name: "Henry", paid: false },
+  { id: 502, name: "Mary", paid: true },
+  { id: 664, name: "Bob", paid: false },
+  { id: 250, name: "Peter", paid: true },
+  { id: 375, name: "Sarah", paid: true },
+  { id: 867, name: "Greg", paid: false },
+];
+
+printRecords(currentEnrollment);
+console.log("----");
+currentEnrollment = paidStudentsToEnroll();
+printRecords(currentEnrollment);
+console.log("----");
+remindUnpaid(currentEnrollment);
+
+/*
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+```
+
+### Exercise 5 Solution
+
+#### Using Function Declaration and Hoisting
+
+{% codepen https://codepen.io/ryanameri/pen/KKzWepw default-tab=js %}
+
+#### Using Arrow Functions
+
+{% codepen https://codepen.io/ryanameri/pen/xxVqWGQ default-tab=js %}
+
+It can easily be seen that the two styles are different but do exactly the same thing. Using function declaration gives us hoisting, and this allows us to write executable part of our program, the _logic_ of our code at the top and easily follow its execution without being encumbered by various utility functions.
+
+On the other hand, the second example using arrow functions is a lot less verbose. It allows us to achieve the same outcome using fewer lines of code. However we do have to be conscious that we can't use our utility functions for example `getStudentFromId` before initialising them first.
