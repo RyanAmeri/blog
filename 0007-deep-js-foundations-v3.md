@@ -1679,3 +1679,35 @@ function notYetPaid(studentId) {
 <small>Make sure you click on console to view the codesandbox embed. Also drag the vertical separator to the right to view the code. It might be better to view the embed in a new window by itself</small>.
 
 The two solutions have a lot of commonalities, but using ES modules requires a lot less extra unnecessary code in the form of a factory function. It does however mean that our module code has to be in a separate file, and then we import that file from our main application.
+
+We should now have a good handle on modules. Next we'll go over the _other_ method of organising our code: objects, class and prototype.
+
+## Objects
+
+Unlike class-based Object Oriented (OO) languages such as Java or C++, JavaScript traditionally implemented OO principled differently, via direct links between objects, without needing classes. This so called _class-less_ or _prototypal_ system differs greatly from the classic class-based system. Like most things in computer engineering, neither paradigm is necessarily superior to the other, each have their pros and cons and we need to learn them both to decide where we can use them effectively.
+
+ES6 added classes as a first class citizen to JavaScript, and a lot more features are being added or have been added to the class syntax in the subsequent years, for example private class fields were added in ES2019 and private methods are a [stage 3 proposal](https://github.com/tc39/proposal-private-methods) which means they'll probably be added to the language in a year or two.
+
+Many JavaScript developers (and ES6 guides and handbooks) have described classes in JavaScript as merely _syntactic sugar_ (allowing developers to do what was previously possible but in a more elegant way) but classes in JavaScript now go beyond being just syntactic sugar. In this section, we'll first go in-depth into the `this` keyword, then we'll discuss classes and finally JavaScript's original prototypes and linking of objects.
+
+### `this`
+
+If you have a background in another class-based programming language, it's important to put your knowledge of `this` aside in order to have a better understanding of JavaScript's `this`, as JavaScript's `this` is slightly different from the `this` that you might encounter in other environments, and this difference has lead to a lot of confusion.
+
+In JavaScript, `this` references an object inside a function. Which object, you ask? It depends! The reference to the object is set only when the function is called, or as [MDN says:](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) "In most cases, the value of this is determined by how a function is called (runtime binding). It can't be set by assignment during execution, and it may be different each time the function is called". Does it sound like Dynamic Scoping? Why yes it does! As it turns out, `this` is the other feature that gives JavaScript a lot of the flexibilities that dynamic scoping provides languages such as the original Lisp.
+
+Here is my cheat code: I think of `this` as whatever was to the left of `.` when the function was called. Here is an example:
+
+```js
+const test = {
+  prop: 42,
+  func() {
+    return this.prop;
+  },
+};
+
+console.log(test.func()); //prints: 42
+
+```
+
+In the console.log, what is to the left of the `.` when the function `func` is called? The object `test`. So inside the function `func`, `this` is set to reference the object `test`. So our function doesn't take any arguments, and returns `this.prop` which is the same as `test.prop` which is `42`. 
