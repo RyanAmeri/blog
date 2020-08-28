@@ -1020,13 +1020,13 @@ console.log(name); //prints Ryan
 
 The second developer is implementing a computer science principle here called "The Principle of Least Privilege" by basically hiding the internal workings of their code from the outside world. This is great, but our second developer had to write a lot of additional code. Furthermore, they had to create and declare a function that they have no intention of reusing again. They just had to create `anotherName` to avoid name collisions.
 
-### IFFE
+### IIFE
 
-Around 2011 or so, JavaScript developers came up with the concept of _Immediately Invoked Function Expression_ or IFFE. IFFE in effect uses the rules of scope of JavaScript, wraps a function in parentheses (turning it from a function declaration into a function expression) and immediately executes it. So the previous example becomes:
+Around 2011 or so, JavaScript developers came up with the concept of _Immediately Invoked Function Expression_ or IIFE. IIFE in effect uses the rules of scope of JavaScript, wraps a function in parentheses (turning it from a function declaration into a function expression) and immediately executes it. So the previous example becomes:
 
 ```js
 var name = "Ryan";
-///Now the 2nd developer creates an IFFE instead
+///Now the 2nd developer creates an IIFE instead
 (function anotherName() {
   var name = "Sarah";
   console.log(name);
@@ -1045,7 +1045,7 @@ It's important to note that putting `{}` by itself doesn't make a block. The _ch
 
 Because `var` was previously only bound by function scoping, and JavaScript designers did not want to change its behaviour and break old code (refer to section on backwards compatibility), var still does not observe block scoping and is only bound by function scope.
 
-And this difference in scope is the main difference between `var` with `let` and `const`. Now we know why these two new ways of declaring variables were added to JavaScript. With these new tools, we can write our previous IFFE example as:
+And this difference in scope is the main difference between `var` with `let` and `const`. Now we know why these two new ways of declaring variables were added to JavaScript. With these new tools, we can write our previous IIFE example as:
 
 ```js
 var name = "Ryan";
@@ -1684,30 +1684,550 @@ We should now have a good handle on modules. Next we'll go over the _other_ meth
 
 ## Objects
 
-Unlike class-based Object Oriented (OO) languages such as Java or C++, JavaScript traditionally implemented OO principled differently, via direct links between objects, without needing classes. This so called _class-less_ or _prototypal_ system differs greatly from the classic class-based system. Like most things in computer engineering, neither paradigm is necessarily superior to the other, each have their pros and cons and we need to learn them both to decide where we can use them effectively.
+Unlike class-based Object Oriented (OO) languages such as Java or C++, JavaScript traditionally implemented OO principles differently, via direct links between objects, without needing classes. This so called _class-less_ or _prototypal_ system differs greatly from the classic class-based system. Like most things in computer engineering, neither paradigm is necessarily superior to the other, each have their pros and cons and we need to learn them both to decide where we can use them effectively.
 
 ES6 added classes as a first class citizen to JavaScript, and a lot more features are being added or have been added to the class syntax in the subsequent years, for example private class fields were added in ES2019 and private methods are a [stage 3 proposal](https://github.com/tc39/proposal-private-methods) which means they'll probably be added to the language in a year or two.
 
 Many JavaScript developers (and ES6 guides and handbooks) have described classes in JavaScript as merely _syntactic sugar_ (allowing developers to do what was previously possible but in a more elegant way) but classes in JavaScript now go beyond being just syntactic sugar. In this section, we'll first go in-depth into the `this` keyword, then we'll discuss classes and finally JavaScript's original prototypes and linking of objects.
 
-### `this`
+## `this`
 
-If you have a background in another class-based programming language, it's important to put your knowledge of `this` aside in order to have a better understanding of JavaScript's `this`, as JavaScript's `this` is slightly different from the `this` that you might encounter in other environments, and this difference has lead to a lot of confusion.
+If you have a background in another class-based programming language, it's important to put your knowledge of `this` aside in order to have a better understanding of JavaScript's `this`; JavaScript's `this` is slightly different from the `this` that you might encounter in other environments, and this difference can lead to confusion.
 
-In JavaScript, `this` references an object inside a function. Which object, you ask? It depends! The reference to the object is set only when the function is called, or as [MDN says:](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) "In most cases, the value of this is determined by how a function is called (runtime binding). It can't be set by assignment during execution, and it may be different each time the function is called". Does it sound like Dynamic Scoping? Why yes it does! As it turns out, `this` is the other feature that gives JavaScript a lot of the flexibilities that dynamic scoping provides languages such as the original Lisp.
+In JavaScript, `this` references an object inside a function. Which object, you ask? It depends! The reference to the object is set only when the function is called, or as [MDN says:](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this) "In most cases, the value of this is determined by how a function is called (runtime binding). It can't be set by assignment during execution, and it may be different each time the function is called". Does it sound like Dynamic Scoping? Why yes it does! As it turns out, `this` is the other feature that gives JavaScript a lot of the flexibilities that dynamic scoping provides languages such as the original Lisp and bash.
 
-Here is my cheat code: I think of `this` as whatever was to the left of `.` when the function was called. Here is an example:
+One of the powerful tools in JavaScript is our ability to implicitly and explicitly set `this` to something at the moment we are calling the function. But this power also causes confusion if we are not aware of all the different ways a function can be called and how each method affects `this`.
+
+## The 4 different ways of running a function
+
+You might find this surprising but it turns out, there are 4 different way of running a function in JavaScript!
+
+### 1. Implicit binding
+
+The most common pattern, and the one you're probably familiar with from other languages. Here, `this` is whatever was to the left of `.` when the function was called. Let's look at an example:
 
 ```js
 const test = {
   prop: 42,
-  func() {
-    return this.prop;
+  func(statement) {
+    console.log(statement, ":", this.prop);
   },
 };
 
-console.log(test.func()); //prints: 42
-
+test.func("The number is"); //prints: "The number is : 42"
 ```
 
-In the console.log, what is to the left of the `.` when the function `func` is called? The object `test`. So inside the function `func`, `this` is set to reference the object `test`. So our function doesn't take any arguments, and returns `this.prop` which is the same as `test.prop` which is `42`. 
+When the function `func` is run, it takes in a parameter and then prints it and adds `this.prop` to the end. But what is `this.prop`? When the function is called, the object that is to the left of the `.` is assigned to `this`, which in this case is the object `test`. So inside the function `func`, `this` refers to `test` and so `this.prop` refers to `test.prop` and so its value, 42 is printed.
+
+Since we are not excplitly saying (binding) what `this` should refer to, instead `this` refers to what was to left of the `.`, this method is called _implicit binding_.
+
+Notice that we can take our function outside the object and make it a standalone function, and allow it to be a lot more shareable and reusable between different object. For example:
+
+```js
+function func(statement) {
+  console.log(statement, ":", this.prop);
+}
+const test1 = {
+  prop: 42,
+  func: func,
+};
+
+const test2 = {
+  prop: 88,
+  func: func,
+};
+const statement = "The number is";
+test1.func(statement); //prints: "The number is : 42"
+test2.func(statement); //prints: "The number is : 88"
+```
+
+The exact same function is referenced in both objects `test1` and `test2`, and the exact same parameter is passed to them, yet due to implicit binding and `func` being a this-aware function, its results are different.
+
+### 2. Explicit Binding
+
+#### The `bind method
+
+Implicit binding works great when we are in control of when/how are function is being called. But what if we are not? What if we need to for example run our function asynchronously? Let's try running our previous example with a `setTimeout` set to 10ms.
+
+```js
+function func(statement) {
+  console.log(statement, ":", this.prop);
+}
+const test1 = {
+  prop: 42,
+  func: func,
+};
+
+const test2 = {
+  prop: 88,
+  func: func,
+};
+const statement = "The number is";
+
+setTimeout(test1.func, 10, statement); //oops! we get: The number is : undefined
+setTimeout(test2.func, 10, statement); //again: The number is : undefined
+```
+
+In this example, we have "lost our binding". Because we are not in control of what the call stack looks like when the function is executed, we've run into an error (specifically setTimeout sets `this` to refer to the _global_ object, and since our global object doesn't have a `prop` property, undefined is printed)
+
+In this instance, we can use the `bind` method to explicitly bind `this` to an object. For example:
+
+```js
+function func(statement) {
+  console.log(statement, ":", this.prop);
+}
+const test1 = {
+  prop: 42,
+  func: func,
+};
+
+const test2 = {
+  prop: 88,
+  func: func,
+};
+const statement = "The number is";
+
+setTimeout(test1.func.bind(test1), 10, statement); // The number is : 42
+setTimeout(test2.func.bind(test2), 10, statement); //The number is : 88
+```
+
+Now our code works. We have explicitly told the JavaScript engine to bind `this` to the object we are specifying as the argument. No matter what the call stack looks like when the function is run, set its `this` to the object we are explicitly specifying.
+
+However, do note that we are now taking a this-aware function and making it specifically less flexible.
+
+Some people claim that using explicit binding in this fashion is an anti-pattern, that `bind` should be avoided at all costs. Like you've seen in the rest of this series, I believe there are pros and const to using explicit binding. If you write this-aware functions and most of the time you are using implicit binding and every once in a while you need to use `bind`, then you are probably taking most of dynamic contexts. If however you find yourself having to use explicit binding a lot in your code, you're doing things the hard way. It's a sign that perhaps you need to refactor your code and turn the function into a module.
+
+#### The `call` and `apply` methods
+
+Remember our example demonstrating the difference between lexical vs dynamic scope?
+
+```js
+let str = "begin";
+console.log(`start: str=${str}`);
+
+function inner() {
+  console.log(`inner: str=${str}`);
+}
+
+function outer() {
+  let str = "outer";
+  inner();
+}
+
+outer();
+console.log(`end: str=${str}`);
+```
+
+Which prints
+
+```
+str=begin
+inner: str=begin
+end: str=begin
+```
+
+Due to the rules of lexical scope in JavaScript. Let's look at a method of "fixing" this code so that it behaves similarly to our bash script:
+
+```js
+let str = "begin";
+console.log(`start: str=${str}`);
+
+function inner() {
+  console.log(`inner: str=${this.str}`);
+}
+
+function outer() {
+  let props = { str: "outer" };
+  inner.call(propsCom);
+}
+
+outer();
+console.log(`end: str=${str}`);
+```
+
+In the function `outer`, we first create an object, with the property `str` and a value "outer". Then instead of directly running the `inner` function, we use its call method. The call method allows us to explicitly tell the function which object its `this` should refer to. So in this example, we are saying "run the inner function, and set its `this` to refer to `props`.
+
+When the `inner` function runs, instead of simply following the rules of lexical scope and going up the nested scope to find the value for `str` in _global_, it is told to print `this.str`. And since we have already explicitly told it that `this` should refer to `props`, the JS engine looks into `props.str` and prints its value, which is "outer". Now our code has the exact same output as our bash script:
+
+```
+str=begin
+inner: str=outer
+end: str=begin
+```
+
+We have thus given our function the flexibilities of dynamic scope by making it a this-aware functions.
+
+Now let's change our previous example to use the call method instead of implicit binding:
+
+```js
+function func(statement) {
+  console.log(statement, ":", this.prop);
+}
+const test1 = {
+  prop: 42,
+  func: func,
+};
+
+const test2 = {
+  prop: 88,
+  func: func,
+};
+const statement = "The number is";
+func.call(test1, statement); //prints: "The number is : 42"
+func.call(test2, statement); //prints: "The number is : 88"
+```
+
+`apply` is very similar to `call`. Tania Rascia [describes their difference](https://www.taniarascia.com/this-bind-call-apply-javascript/) succinctly:
+
+> The only difference between call and apply is that call requires the arguments to be passed in one-by-one, and apply takes the arguments as an array.
+
+### 3. Using `new`
+
+Those coming to JavaScript with a background in classically Object Oriented languages (such as Java) will be surprised by this, but in JavaScript, the `new` keyword is not restricted to be used by classes, it's an operator that runs functions!
+
+But how does it run a function? `new` specifically does four things in the background:
+
+1. Create an empty object
+2. Run the function following it
+3. Set the `this` inside that function to refer to the newly created object
+4. If the function doesn't return anything, return `this` object
+
+Let's look at an example:
+
+```js
+function test() {
+  this.prop = "Ryan";
+}
+const myName = new test();
+console.log(myName.prop); //prints: Ryan
+```
+
+What happened here? Let's run through our steps again:
+
+1. The `new` operator created an empty object
+2. `new` runs the function `test`.
+3. Inside the `test` function, `new` sets its `this` to refer to the empty object
+4. Since the function doesn't return anything, new returns the `this` object, which gets assigned to the object `myName`. Finally console.log prints the value of the `prop` property in that object, which is now set to "Ryan".
+
+In effect, `new` here is just syntactic sugar. It merely does what we could have done manually, but does it in a more elegant way. We could have written the previous example as:
+
+```js
+function test() {
+  this.prop = "Ryan";
+  return this;
+}
+const myName = test.call({});
+console.log(myName.prop); //prints: Ryan
+```
+
+We achieve the same result without using `new`. We run the function `test` using explicit binding, and we pass in an empty object to be set to its `this`, and inside the function, we make sure we return `this`.
+
+### 4. Default binding
+
+We've covered implicit binding, explicit binding, and the `new` operator. There is one other method of calling a function: the old fashioned way, without reference to any object! Consider:
+
+```js
+let name = "Ryan";
+function func(statement) {
+  console.log(statement, name);
+}
+func("How are you today"); // prints: "how are you today Ryan"
+```
+
+The most simple function call. Following the rules of lexical scope, the JS engine resolves what `name` refers to and prints its value. But what if our function was this-aware? Consider:
+
+```js
+"use strict";
+let name = "Ryan";
+function func(statement) {
+  console.log(statement, this.name);
+}
+func("how are you today"); // the output depends on strict vs sloppy mode
+```
+
+Now are function is this-aware, but we are not referencing an object when calling it. There is no implicit binding, we are not explicitly passing in an object with a `call` or `bind` methods, and there is no `new` keyword. When non of those 3 methods are present, JavaScript uses default binding to resolve `this` as a fallback method. And the fallback method behaves differently depending on whether you're in strict or sloppy mode.
+
+#### Strict mode
+
+In strict mode, if `this` is not specifically set using one of the previous 3 methods, it's set to `undefined`. And call a non-existent property on `undefined` will result in a type error. So:
+
+```js
+"use strict";
+let name = "Ryan";
+function func(statement) {
+  console.log(statement, this.name);
+}
+func("how are you today"); // Error: Uncaught TypeError: Cannot read property 'name' of undefined
+```
+
+#### Sloppy mode
+
+In sloppy mode, if `this` is not set using one of the previously discussed 3 methods, it is set to the global object. So:
+
+```js
+let name = "Ryan";
+function func(statement) {
+  console.log(statement, this.name);
+}
+func("how are you today"); // prints: how are you today Ryan
+```
+
+Because `this` is set to global, and we've defined our variable `name` in global scope, it works and the statement "how are you today Ryan" is printed. Of course if we didn't have a `name` property in global scope, a non-existent property gets coerced into an empty string, so:
+
+```js
+function func(statement) {
+  console.log(statement, this.name);
+}
+func("how are you today"); // prints: how are you today
+```
+
+Prints "how are you today". In effect it would "silently" ignore `this.name` without throwing an error.
+
+It is almost always a bad idea to invoke a this-aware function without specifying what the `this` refers to (implicitly or excplitly). Strict mode catches this as an error and saves us from unintended behaviour, which is another reason why you should always prefer to write in strict mode.
+
+### How to find what `this` refers to
+
+What if you code uses multiple of these methods to run a function? What will `this` refer to then? For example:
+
+```js
+const person = {
+  name: "Ryan",
+  greeting(salutation) {
+    console.log(salutation, this.name);
+  },
+};
+new (person.greeting.bind(person))("How are you today"); //Error... but why?
+```
+
+Obviously this is a contrived example and you should never write code like this! But it's a good way of demonstrating the rules of binding precedence, which are:
+
+1. Is the function called by `new`? Then `this` is an empty object.
+2. Is the function called explicitly by `bind` or `call` or similar? Then `this` is the object passed in as the argument
+3. Is the function called on an object? Then `this` is implicitly set to the object to the left of the `.` operator
+4. If none of these are present, then `this` falls back to default binding:
+
+   - In strict mode, `this` is `undefined`
+
+   - In sloppy mode, `this` is set to the `global` object
+
+Following these four rules in order, you can always figure out what `this` refers to.
+
+### Arrow functions
+
+You might have heard that in arrow functions there is _lexical `this`_. There is no such thing as a _lexical `this`_ per se, it's best to state that arrow functions **don't have a `this`**, so if a `this` appears in an arrow function, it gets resolved like any other variable using the rules of lexical scope.
+
+Let's look at an example:
+
+```js
+const test = {
+  prop: 42,
+  func(statement) {
+    console.log(statement, ":", this.prop);
+  },
+};
+
+const statement = "The number is";
+
+test.func(statement); // The number is 42
+setTimeout(test.func, 10, statement); // The number is undefined
+setTimeout(test.func.bind(test), 10, statement); // The number is 42
+```
+
+As discussed, we can't just pass `test.func` to setTimeout because we wouldn't be in control of the call stack when setTimeout is executed and so we have no control over what `this` is; we would have to use the `bind` method to explicitly tell the JS engine to set the `this` to `test` when executing it.
+
+If our `func` method was an arrow function:
+
+```js
+const test = {
+  prop: 42,
+  func: (statement) => {
+    console.log(statement, ":", this.prop);
+  },
+};
+
+const statement = "The number is";
+test.func(statement); // The number is undefined
+```
+
+We might think that we are implicitly setting `this` to object `test`. But here `func` is an arrow function so its `this` doesn't get set at all. The JS engine tries to resolve `this.prop` using rules of lexical scope, it goes on to global, can't find the property `prop` on global, so returns undefined.
+
+Of course we can also use this lexical scoping to our advantage:
+
+```js
+const test = {
+  prop: 42,
+  func(statement) {
+    setTimeout(() => {
+      console.log(statement, ":", this.prop);
+    }, 10);
+  },
+};
+
+const statement = "The number is";
+test.func(statement); // prints: This number is 42
+```
+
+Our `func` method executes a setTimeout, which is given an arrow function. This function is this-aware, but since it's an arrow function `this` has no binding in it, it get's lexically scoped. Following the rules of lexical scoping, the JS engine looks at the outer scope, finds a property `prop` there and gets its value `42` and prints it.
+
+### Exercise 7: `this`
+
+> In this exercise, refactor some code that manages student enrolment records for a workshop, from the module pattern to the namespace pattern using the `this` keyword.
+>
+> 1. Remove the `defineWorkshop()` module factory, and replace it with an object literal (named `deepJS`) that holds all the module's functions, as well as the `currentEnrollment` and `studentRecords` data arrays.
+>
+> 2. Change all internal function references and references to the data arrays to use the `this` keyword prefix.
+>
+> 3. Make sure any place where a `this`-aware callback is passed is hard-bound with `bind(..)`. Don't `bind(..)` a function reference if it's not `this`-aware.
+
+```js
+var deepJS = defineWorkshop();
+
+deepJS.addStudent(311, "Frank", true);
+deepJS.addStudent(410, "Suzy", true);
+deepJS.addStudent(709, "Brian", false);
+deepJS.addStudent(105, "Henry", false);
+deepJS.addStudent(502, "Mary", true);
+deepJS.addStudent(664, "Bob", false);
+deepJS.addStudent(250, "Peter", true);
+deepJS.addStudent(375, "Sarah", true);
+deepJS.addStudent(867, "Greg", false);
+
+deepJS.enrollStudent(410);
+deepJS.enrollStudent(105);
+deepJS.enrollStudent(664);
+deepJS.enrollStudent(375);
+
+deepJS.printCurrentEnrollment();
+console.log("----");
+deepJS.enrollPaidStudents();
+console.log("----");
+deepJS.remindUnpaidStudents();
+
+/* Output should be:
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+
+// ********************************
+
+function defineWorkshop() {
+  var currentEnrollment = [];
+  var studentRecords = [];
+
+  var publicAPI = {
+    addStudent,
+    enrollStudent,
+    printCurrentEnrollment,
+    enrollPaidStudents,
+    remindUnpaidStudents,
+  };
+  return publicAPI;
+
+  // ********************************
+
+  function addStudent(id, name, paid) {
+    studentRecords.push({ id, name, paid });
+  }
+
+  function enrollStudent(id) {
+    if (!currentEnrollment.includes(id)) {
+      currentEnrollment.push(id);
+    }
+  }
+
+  function printCurrentEnrollment() {
+    printRecords(currentEnrollment);
+  }
+
+  function enrollPaidStudents() {
+    currentEnrollment = paidStudentsToEnroll();
+    printCurrentEnrollment();
+  }
+
+  function remindUnpaidStudents() {
+    remindUnpaid(currentEnrollment);
+  }
+
+  function getStudentFromId(studentId) {
+    return studentRecords.find(matchId);
+
+    // *************************
+
+    function matchId(record) {
+      return record.id == studentId;
+    }
+  }
+
+  function printRecords(recordIds) {
+    var records = recordIds.map(getStudentFromId);
+
+    records.sort(sortByNameAsc);
+
+    records.forEach(printRecord);
+  }
+
+  function sortByNameAsc(record1, record2) {
+    if (record1.name < record2.name) return -1;
+    else if (record1.name > record2.name) return 1;
+    else return 0;
+  }
+
+  function printRecord(record) {
+    console.log(
+      `${record.name} (${record.id}): ${record.paid ? "Paid" : "Not Paid"}`
+    );
+  }
+
+  function paidStudentsToEnroll() {
+    var recordsToEnroll = studentRecords.filter(needToEnroll);
+
+    var idsToEnroll = recordsToEnroll.map(getStudentId);
+
+    return [...currentEnrollment, ...idsToEnroll];
+  }
+
+  function needToEnroll(record) {
+    return record.paid && !currentEnrollment.includes(record.id);
+  }
+
+  function getStudentId(record) {
+    return record.id;
+  }
+
+  function remindUnpaid(recordIds) {
+    var unpaidIds = recordIds.filter(notYetPaid);
+
+    printRecords(unpaidIds);
+  }
+
+  function notYetPaid(studentId) {
+    var record = getStudentFromId(studentId);
+    return !record.paid;
+  }
+}
+```
+
+### Solution 7 `this`
+
+{% codepen https://codepen.io/ryanameri/pen/vYGmPZo default-tab=js %}
+
+### The case for and against `this`
+
+In the JavaScript world, you'll come across those who use this-aware functions everywhere and those simply refuse to use them and will go out of their way to structure their code in a way that doesn't require them. These are both stylistic choices as well as engineering decisions, and like all other engineering decisions, each side has its pros and cons.
+
+The case for and against `this` is essentially the case for and against dynamic scope in programming language design. Lexical scope is a lot more fixed, all decisions about the behaviour of our function are set by the author of the code. As such, it's also a lot more predictable and a lot more readable. If a function doesn't use `this`, you can read it and have a fairly good idea of what it does, irrespective of how it's called.
+
+Dynamic scope, or dynamic context in the case of JavaScript, gives our functions a lot more flexibility. It allows our function to behave differently based on how it is called at runtime. But this flexibility comes at the cost of predictability. When looking at a this-aware function, it is impossible to determine what it will do by simply reading the description of the function, as its behaviour also depends on how the function is called.
