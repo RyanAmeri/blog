@@ -4,8 +4,9 @@ In this series, we'll do a deep dive into the foundations of JavaScript. This se
 
 - What exactly is the difference between `==` and `===`? _(hint: if you think that `==` doesn't check the types, you are wrong!)_
 - Why was `let` and `const` introduced in JavaScript and what do they actually do?
-- What's the difference between a function declaration and function expression? What is this "hoisting" you keep seeing and why is it different between a function declaration and a function expression?
+- What's the difference between a function declaration and function expression? What is this "hoisting" you keep seeing?
 - Where should you use arrow functions and where should you avoid them?
+- Should you avoid using `this`? When should you use a namespace object and when should you use a module?
 
 The blog series is based on [Kyle Simpson's](https://twitter.com/getify?lang=en) excellent [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on Frontend Masters. The slides for the course are freely available [here](https://static.frontendmasters.com/resources/2019-03-07-deep-javascript-v2/deep-js-foundations-v2.pdf).
 
@@ -1686,9 +1687,7 @@ We should now have a good handle on modules. Next we'll go over the _other_ meth
 
 Unlike class-based Object Oriented (OO) languages such as Java or C++, JavaScript traditionally implemented OO principles differently, via direct links between objects, without needing classes. This so called _class-less_ or _prototypal_ system differs greatly from the classic class-based system. Like most things in computer engineering, neither paradigm is necessarily superior to the other, each have their pros and cons and we need to learn them both to decide where we can use them effectively.
 
-ES6 added classes as a first class citizen to JavaScript, and a lot more features are being added or have been added to the class syntax in the subsequent years, for example private class fields were added in ES2019 and private methods are a [stage 3 proposal](https://github.com/tc39/proposal-private-methods) which means they'll probably be added to the language in a year or two.
-
-Many JavaScript developers (and ES6 guides and handbooks) have described classes in JavaScript as merely _syntactic sugar_ (allowing developers to do what was previously possible but in a more elegant way) but classes in JavaScript now go beyond being just syntactic sugar. In this section, we'll first go in-depth into the `this` keyword, then we'll discuss classes and finally JavaScript's original prototypes and linking of objects.
+In this section, we'll first go in-depth into the `this` keyword, then we'll discuss classes and finally JavaScript's original prototypes and linking of objects.
 
 ## `this`
 
@@ -2226,8 +2225,312 @@ function defineWorkshop() {
 
 ### The case for and against `this`
 
-In the JavaScript world, you'll come across those who use this-aware functions everywhere and those simply refuse to use them and will go out of their way to structure their code in a way that doesn't require them. These are both stylistic choices as well as engineering decisions, and like all other engineering decisions, each side has its pros and cons.
+In the JavaScript world, you'll come across those who use this-aware functions everywhere and those who simply refuse to use them and will go out of their way to structure their code in a way that doesn't require them. These are both stylistic choices as well as engineering decisions, and like all other engineering decisions, each side has its pros and cons.
 
-The case for and against `this` is essentially the case for and against dynamic scope in programming language design. Lexical scope is a lot more fixed, all decisions about the behaviour of our function are set by the author of the code. As such, it's also a lot more predictable and a lot more readable. If a function doesn't use `this`, you can read it and have a fairly good idea of what it does, irrespective of how it's called.
+The case for and against `this` is essentially the case for and against dynamic scope in programming language design. Lexical scope is a lot more fixed, all decisions about the behaviour of our functions are set by the author of the code. As such, it's also a lot more predictable and a lot more readable. If a function doesn't use `this`, you can read it and have a fairly good idea of what it does, irrespective of how it's called.
 
 Dynamic scope, or dynamic context in the case of JavaScript, gives our functions a lot more flexibility. It allows our function to behave differently based on how it is called at runtime. But this flexibility comes at the cost of predictability. When looking at a this-aware function, it is impossible to determine what it will do by simply reading the description of the function, as its behaviour also depends on how the function is called.
+
+## Class
+
+By now we have a good foundational knowledge of objects, and can tell what `this` refers to when used inside a methods.
+
+JavaScript is traditionally a prototypal object oriented language. This loose linking of prototypes (more on them in the next section) affords JavaScript a great deal of flexibility in creating objects, borrowing methods from each other and sharing their data. The rest of the computing world however moved towards class-based objects, and so programmers coming from other environments such as Java or C++ found JavaScript's lack of classes confusing.
+
+ES6 solved this by adding class as a first-class citizen to the language. Many JavaScript developers (and ES6 guides and handbooks) have described class in JavaScript as merely _syntactic sugar_, i.e., allowing developers to do what was previously possible but in a more elegant way. But classes in JavaScript now go way beyond being just syntactic sugar. New features have already been added to JavaScript in subsequent years for example private class fields were added in ES2019 and other features such as [private methods](https://github.com/tc39/proposal-private-methods) and [decorators](https://github.com/tc39/proposal-decorators) are currently being discussed and are likely to be added to the language in the future.
+
+So, what does a class look like? Let's first look at a familiar pattern first:
+
+```js
+function greeting(salutation) {
+  console.log(salutation, this.name, "?");
+}
+var person1 = {
+  name: "Ryan",
+  greeting: greeting,
+};
+person1.greeting("How are you today"); //prints: How are you today Ryan
+```
+
+This combination of objects and functions can be rewritten using the class syntax as:
+
+```js
+class Person {
+  name = "Ryan";
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+var person1 = new Person();
+person1.greeting("How are you today"); //prints: How are you today Ryan ?
+```
+
+Of course we know what the the `new` keyword does. It creates a new object, sets `this` accordingly and returns it. But this class syntax will looks very familiar to anyone coming from Java or C#.
+
+### Constructor
+
+The constructor method is optional, but if we include it in our class, it it called ever time a new object is being created (_instantiated_ in OO parlance), which could give our class more flexibility. For example:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+var person1 = new Person("Ryan");
+person1.greeting("How are you today"); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting("How are you today"); //prints: How are you today Alice ?
+```
+
+Similar to functions, classes can also be anonymous, and they can be assigned to a variable as an expression instead of being declared:
+
+```js
+const Person = class {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+};
+var person1 = new Person("Ryan");
+person1.greeting("How are you today"); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting("How are you today"); //prints: How are you today Alice ?
+```
+
+Though this really is an obtuse pattern and should probably never be used! 😁
+
+### Inheritance
+
+To extend a class with another class (what in OO programming is called _inheritance_), you can use the `extends` operator:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+
+class Student extends Person {
+  studentGreeting(salutation) {
+    this.greeting(salutation);
+  }
+}
+
+var student1 = new Student("Ryan");
+student1.studentGreeting("How are you student"); //prints: How are you student Ryan ?
+```
+
+The class `Student` extends from `Person`, so it has access to all the methods and properties of its parent class.
+
+Notice that in JavaScript (unlike some other OO languages) a class can only extend one other class, i.e., a child can only have one parent. Though the inheritance chain can continue ad infinitum, for example the a class `FirstYearStudent` can extend the `Student` class. In OO speak, a parent can have many children but each child can have only one parent.
+
+Class also gives us the `super` keyword, with which we can call a method of the parent class from a child. This is the first instance of a feature we are running into which was not possible with JavaScript's traditional prototypal system: _relative polymorphism_. Now we can see that `class` in JavaScript is more than merely syntactic sugar.
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+
+class Student extends Person {
+  greeting(salutation) {
+    super.greeting(salutation.toUpperCase());
+  }
+}
+
+var student1 = new Student("Ryan");
+student1.greeting("How are you student"); // prints: HOW ARE YOU STUDENT Ryan ?
+```
+
+### Still a dynamic `this`
+
+The ES6 class syntax does not change anything about how functions/methods are called, what `this` refers to and how that binding works. So for example:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+var person1 = new Person("Ryan");
+person1.greeting("How are you"); //prints: How are you Ryan ?
+setTimeout(person1.greeting, 10, "How are you"); //prints: How are you  ?
+```
+
+We are still "losing" our binding to `this` when we are not in charge of how the function is called. `this` still has a dynamic context, exactly as discussed in the previous section. There is nothing in the class syntax that automatically binds `this` to the class method it was created from.
+
+There are a lot of developers who would like a different behaviour. They would like JavaScript to force `this` to be auto bound to class methods, as they are in some other OO languages. There are discussions underway and proposals around this and such a feature might be added to JavaScript at some point in the future.
+
+Currently the developers who favour such auto binding of `this` have developed the following pattern:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+    this.greeting = (salutation) => {
+      console.log(salutation, this.name, "?");
+    };
+  }
+}
+var person1 = new Person("Ryan");
+person1.greeting("How are you"); //prints: How are you Ryan ?
+setTimeout(person1.greeting, 10, "How are you"); //prints: How are you Ryan ?
+```
+
+Instead of adding methods to class, here we are adding methods as properties to the `this` object in the constructor, and then using arrow functions and its _lexical `this`_ to always bind `this` to the class method.
+
+But this pattern is problematic and mostly superfluous. It is in effect the same as defining this-aware functions and then using `bind` or `apply` every time we are calling them to explicitly bind an object to `this`. If you find yourself reaching for this pattern, your code might be better refactored as a module.
+
+### Exercise 8: Class
+
+> In this exercise, refactor some code that manages student enrolment records for a workshop, from the namespace pattern to the `class` pattern.
+>
+> 1. Define a class called `Helpers` that includes the functions that are not `this`-aware.
+> 2. Define a class called `Workshop` that extends `Helpers`, which includes all the other functions. Hint: `constructor()` and `super()`.
+> 3. Instantiate the `Workshop` class as `deepJS`.
+
+```js
+var deepJS = {
+  currentEnrollment: [],
+  studentRecords: [],
+  addStudent(id, name, paid) {
+    this.studentRecords.push({ id, name, paid });
+  },
+  enrollStudent(id) {
+    if (!this.currentEnrollment.includes(id)) {
+      this.currentEnrollment.push(id);
+    }
+  },
+  printCurrentEnrollment() {
+    this.printRecords(this.currentEnrollment);
+  },
+  enrollPaidStudents() {
+    this.currentEnrollment = this.paidStudentsToEnroll();
+    this.printCurrentEnrollment();
+  },
+  remindUnpaidStudents() {
+    this.remindUnpaid(this.currentEnrollment);
+  },
+  getStudentFromId(studentId) {
+    return this.studentRecords.find(matchId);
+
+    // *************************
+
+    function matchId(record) {
+      return record.id == studentId;
+    }
+  },
+  printRecords(recordIds) {
+    var records = recordIds.map(this.getStudentFromId.bind(this));
+
+    records.sort(this.sortByNameAsc);
+
+    records.forEach(this.printRecord);
+  },
+  sortByNameAsc(record1, record2) {
+    if (record1.name < record2.name) return -1;
+    else if (record1.name > record2.name) return 1;
+    else return 0;
+  },
+  printRecord(record) {
+    console.log(
+      `${record.name} (${record.id}): ${record.paid ? "Paid" : "Not Paid"}`
+    );
+  },
+  paidStudentsToEnroll() {
+    var recordsToEnroll = this.studentRecords.filter(
+      this.needToEnroll.bind(this)
+    );
+
+    var idsToEnroll = recordsToEnroll.map(this.getStudentId);
+
+    return [...this.currentEnrollment, ...idsToEnroll];
+  },
+  needToEnroll(record) {
+    return record.paid && !this.currentEnrollment.includes(record.id);
+  },
+  getStudentId(record) {
+    return record.id;
+  },
+  remindUnpaid(recordIds) {
+    var unpaidIds = recordIds.filter(this.notYetPaid.bind(this));
+
+    this.printRecords(unpaidIds);
+  },
+  notYetPaid(studentId) {
+    var record = this.getStudentFromId(studentId);
+    return !record.paid;
+  },
+};
+
+// ********************************
+
+deepJS.addStudent(311, "Frank", true);
+deepJS.addStudent(410, "Suzy", true);
+deepJS.addStudent(709, "Brian", false);
+deepJS.addStudent(105, "Henry", false);
+deepJS.addStudent(502, "Mary", true);
+deepJS.addStudent(664, "Bob", false);
+deepJS.addStudent(250, "Peter", true);
+deepJS.addStudent(375, "Sarah", true);
+deepJS.addStudent(867, "Greg", false);
+
+deepJS.enrollStudent(410);
+deepJS.enrollStudent(105);
+deepJS.enrollStudent(664);
+deepJS.enrollStudent(375);
+
+deepJS.printCurrentEnrollment();
+console.log("----");
+deepJS.enrollPaidStudents();
+console.log("----");
+deepJS.remindUnpaidStudents();
+
+/* Output should be:
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+```
+
+### Solution 8 Class
+
+#### Ryan's Solution
+
+{% codepen https://codepen.io/ryanameri/pen/GRZEjrr default-tab=js %}
+
+#### Kyle's Solution
+
+{% codepen https://codepen.io/ryanameri/pen/rNewMjP default-tab=js %}
+
+First of all, it's important to note how similar the class solution is to the traditional class-less objects we observed in the previous section. The two codes have a lot in common, and yet lead to vastly different mental models. If you have a background in another OO language, the class syntax will feel much more comfortable.
+
+As for comparing my solution to Kyle's, I ended up using private class fields, which was introduced in ES2019. This obviated the need to have an explicit constructor and to call `super` in it, and in my opinion makes the code both easier to read and more self-documenting. The other difference between the two solutions is that I defined a few of the methods such as `notYetPaid` and `getStudentFromID` as arrow functions (arrow methods?) so that there's not need to bind `this` explicitly when calling them, we can just allow the _lexical `this`_ to do its job.
