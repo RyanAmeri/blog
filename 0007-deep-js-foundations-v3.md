@@ -2233,11 +2233,17 @@ Dynamic scope, or dynamic context in the case of JavaScript, gives our functions
 
 ## Class
 
-By now we have a good foundational knowledge of objects, and can tell what `this` refers to when used inside a methods.
+By now we have a good foundational knowledge of objects and can tell what `this` refers to in methods. Before delving deep into classes, it's important to make a clear distinction between classes in JavaScript as opposed to some other OO-based languages.
 
-JavaScript is traditionally a prototypal object oriented language. This loose linking of prototypes (more on them in the next section) affords JavaScript a great deal of flexibility in creating objects, borrowing methods from each other and sharing their data. The rest of the computing world however moved towards class-based objects, and so programmers coming from other environments such as Java or C++ found JavaScript's lack of classes confusing.
+In computer science theory, there is no single definition of what a class should be. Every programming language in history has defined classes slightly differently, and there is no _true_ way of making and using classes. In fact, a member of the TC39 committee recently observed:
 
-ES6 solved this by adding class as a first-class citizen to the language. Many JavaScript developers (and ES6 guides and handbooks) have described class in JavaScript as merely _syntactic sugar_, i.e., allowing developers to do what was previously possible but in a more elegant way. But classes in JavaScript now go way beyond being just syntactic sugar. New features have already been added to JavaScript in subsequent years for example private class fields were added in ES2019 and other features such as [private methods](https://github.com/tc39/proposal-private-methods) and [decorators](https://github.com/tc39/proposal-decorators) are currently being discussed and are likely to be added to the language in the future.
+{% twitter 1299037840026697728 %}
+
+Nevertheless the great majority of programmers first encounter classes in JavaScript after they've already been introduced to them in a language such as Java or C++; so the Java/C++ way of making classes is hugely influential.
+
+But JavaScript is traditionally a prototypal object-linked language. This loose linking of prototypes (more on prototypes in the next section) affords JavaScript a great deal of flexibility in creating objects, borrowing methods from each other and sharing their data. The rest of the computing world however moved towards class-based objects, and so programmers coming from other environments such as Java or C++ found JavaScript's lack of classes confusing.
+
+ES6 solved this by adding class as a first-class citizen to the language. Many JavaScript developers (and JavaScript guides and handbooks) have described class in JavaScript as merely _syntactic sugar_, i.e., allowing developers to do what was previously possible but in a more elegant way. But classes in JavaScript now go way beyond being just syntactic sugar. New features have already been added to JavaScript in subsequent years for example private class fields were added in ES2019 and other features such as [private methods](https://github.com/tc39/proposal-private-methods) and [decorators](https://github.com/tc39/proposal-decorators) are currently being discussed and are likely to be added to the language in the future.
 
 So, what does a class look like? Let's first look at a familiar pattern first:
 
@@ -2534,3 +2540,440 @@ deepJS.remindUnpaidStudents();
 First of all, it's important to note how similar the class solution is to the traditional class-less objects we observed in the previous section. The two codes have a lot in common, and yet lead to vastly different mental models. If you have a background in another OO language, the class syntax will feel much more comfortable.
 
 As for comparing my solution to Kyle's, I ended up using private class fields, which was introduced in ES2019. This obviated the need to have an explicit constructor and to call `super` in it, and in my opinion makes the code both easier to read and more self-documenting. The other difference between the two solutions is that I defined a few of the methods such as `notYetPaid` and `getStudentFromID` as arrow functions (arrow methods?) so that there's not need to bind `this` explicitly when calling them, we can just allow the _lexical `this`_ to do its job.
+
+# Prototypes
+
+Now that we've got a good understanding of how classes work in JavaScript, let's have a look at the underlying prototypal system, which is JavaScript's traditional method of linking objects together and still a common pattern to this day. You will not only encounter this pattern in legacy codebases, but questions about prototypes are also very common in technical interviews. Understanding prototypes will also allow you to debug your code much easier, and it will help us to _think like JavaScript_.
+
+Let's have a look at our class example from the previous section:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+const statement = "How are you today";
+var person1 = new Person("Ryan");
+person1.greeting(statement); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting(statement); //prints: How are you today Alice ?
+```
+
+In the prototypal system, this would be written as:
+
+```js
+function Person(name) {
+  this.name = name;
+}
+
+Person.prototype.greeting = function (salutation) {
+  console.log(salutation, this.name, "?");
+};
+const statement = "How are you today";
+var person1 = new Person("Ryan");
+person1.greeting(statement); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting(statement); //prints: How are you today Alice ?
+```
+
+In order to understand what this code is doing, let's dig a little deep into how JavaScript works.
+
+## [[prototype]]
+
+Every object in JavaScript has a hidden property called [[prototype]]. We can't/shouldn't directly access this property (there are methods of accessing it but they are deprecated) but we should know it exists. The [[prototype]] property points to another object! This object (usually) doesn't have a name, we simply call it as object's prototype. Bad names abound in this section which is why I'll try to use diagrams to illustrate the concepts better).
+
+Let's create a new simple object called Person, give it some properties and a method. Remember that our object will also have a hidden [[prototype]] property (we'll discuss where its [[prototype]] points to later).
+
+```js
+let person = {};
+person.name = "Ryan";
+person.age = 35;
+person.greeting = function () {
+  console.log(`Hi my name is ${this.name}`);
+};
+```
+
+![person object](assets/0007_prototype_01.svg)
+
+Now let's create a second object called student. The student object should have a studentID property as well as a method called introduce.
+
+```js
+let student = {};
+student.id = 999999;
+student.introduce = function () {
+  console.log(`My student number is ${this.id}`);
+};
+```
+
+Nothing too fancy. Now our model is:
+
+![person and student](assets/0007_prototype_02.svg)
+
+### Setting [[prototype]]
+
+But a student is a kind of person. And it would be great if our student could have a name and could greet, but didn't have to copy all the methods and the properties of person. Well, remember how we said that you can't directly access [[prototype]]? That's correct, but there is a way of setting and reading (i.e., a setter and a getter) for that property. This line instructs the JS engine to change student's [[prototype]] to refer to person.
+
+```js
+Object.setPrototypeOf(student, person);
+```
+
+![linking person and student](assets/0007_prototype_03.svg)
+
+What does this allow us to do? Watch this!
+
+```js
+student.greeting(); // prints: Hi my name is Ryan
+```
+
+Wait! our student object only has an introduce method, it doesn't have a greeting method. So how did it work?
+
+When you instruct the JS engine to access a property on an object, it first looks to see if the object has that property. So here, the JS engine looked to see if student has a property called greeting. It doesn't! But instead of giving up or throwing an error, the JS engine next goes to see what student's [[prototype]] is, and then goes and checks if that object has that property. So here the JS engine checks's student's [[prototype]], sees that it's person. It then checks person to see if person has a property called greeting. It does, so greeting is executed.
+
+This checking the [[prototype]] property and going to the next object is called "moving up the prototype chain" and is the fundamental concept behind JavaScript's prototypal system.
+
+### Object.create
+
+Instead of setting the [[prototype]] of student after it has already been created, we can set it automatically at the time we are creating the object with `Object.create`. Object.create will always return a new empty object, but it sets its [[prototype]] to refer to the argument we pass it. In fact [MDN says that](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/setPrototypeOf) from a performance point of view using `Object.setPrototypeOf` is very costly and we should always prefer to use Object.create. So our code would be:
+
+```js
+let person = {};
+person.name = "Ryan";
+person.age = 35;
+person.greeting = function () {
+  console.log(`Hi my name is ${this.name}`);
+};
+let student = Object.create(person);
+student.id = 999999;
+student.introduce = function () {
+  console.log(`My student number is ${this.id}`);
+};
+console.log(student.id); // prints: 999999
+student.introduce(); // prints: My student number is 999999
+console.log(student.name); // prints: Ryan
+student.greeting(); // prints: Hi my name is Ryan
+person.introduce(); // Error: person.introduce is not a function
+```
+
+You can see that you can access the properties and the methods that are on the object themselves, and you can access the properties and methods that are on the object which student's [[prototype]] refers to. But this linkage is a one way street, person doesn't have access to the method introduce.
+
+The prototype chain can go up any number of levels. For example we could have an object called `freshmen` which is a kind of student. We'd create this object as
+
+```js
+let freshmen = Object.create(student);
+freshmen.subject = "CS101";
+console.log(freshmen.name); // prints: Ryan
+console.log(freshmen.subject); //prints: CS101
+freshmen.introduce(); // prints: My student number is 999999
+```
+
+![linking freshmen and person and student](assets/0007_prototype_04.svg)
+
+Now freshmen has access to its own properties, as well the properties and methods in student and person. When we reference `freshmen.name` for example, the JS engine looks to see if the object freshmen has a property name. It doesn't, so next the JS engine looks to see if the object that is set as the [[prototype]] of freshmen (student) has a property name. It doesn't, so it continues to move up the prototype chain until it gets to person, which has a property called name, it gets that value and prints it.
+
+### Shadowing
+
+It's probably self evident, but a quick note is in order about what shadowing means. If you add a property `name` to freshmen, that property then _shadows_ the property of the same name that resides in person. So for example:
+
+```js
+freshmen.name = "Alice";
+console.log(freshmen.name); //prints: Alice
+console.log(student.name); //prints: Ryan
+console.log(person.name); //prints: Ryan
+```
+
+When we set a name property on freshmen, the next time we tell the JS engine to find that value, it doesn't use the prototype chain anymore. It just looks at the object freshmen, finds the value Alice and prints it. But `person.name` is still of course there, it hasn't been overwritten. If we access `student.name` or directly access `person.name`, the JS engine will still find it and return its value.
+
+## The _other_ Prototype
+
+Hopefully you're feeling good in your understanding of [[prototype]] because I'm just about to confuse you again by introducing another badly named property: `prototype`.
+
+I'm not kidding, there is another property called `prototype`, and this one is visible and accessible and different from but related to the hidden [[prototype]]! In order to understand it, let's first revisit what the `new` operator does. If you remember from our previous discussion, `new` does 4 things:
+
+1. Create an empty object
+2. Run the function following it
+3. Set the `this` inside that function to refer to the newly created object
+4. If the function doesn't return anything, return `this` object
+
+Functions also have a `prototype` property. What this property does is: when an object is created from this function using the `new` keyword, the object's [[prototype]] is set to whatever the function's `prototype` refers to. This can be confusing so let's look at this example:
+
+```js
+function Person(name) {
+  this.name = name;
+}
+var person1 = new Person("Ryan");
+console.log(Person.prototype); //prints an object
+console.log(Object.getPrototypeOf(person1)); //prints the same object
+Object.is(Person.prototype, Object.getPrototypeOf(person1)); //true
+```
+
+Person is a function, it also has a property called `prototype` that refers to an object. When we create an object from this function using `new`, the `new` keyword creates a new object, sets its `this` accordingly, sets the [[prototype]] property of this object to refer to whatever Person's prototype is referring to, and finally returns that new object and it is assigned to variable person1. You can check and see that person1.[[prototype]] is referring to the same object as Person.prototype.
+
+![prototype and [[prototype]]](assets/0007_prototype_05.svg)
+
+At this point, you might be asking, Person is a function. Functions receive parameters and do somethings and return some value. How come it also has a property? Well, now it's time to finally see why some people say everything is an object in JavaScript.
+
+## (nearly) Everything is an object
+
+Remember how in our section on types, we discussed that in JavaScript, everything other than the the primitive types is an object? It is commonly stated that arrays and functions and sets and maps are all objects. But what does that mean? How does that work? With [[prototype]] and `prototype` of course!
+
+In JavaScript, there is one big function called [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object). This function has a `prototype` property that points to an object called `Object.prototype`. Object.prototype is the granddaddy of all objects. Every other object, either directly or indirectly through the prototype chain, has its [[prototype]] point towards Object.prototype (unless it points directly to `null`). So when you create a new so called _empty_ object using the literal syntax, it's not really empty! It has its hidden [[prototype]] property point to Object.prototype, and as such has access to methods and properties through the prototype chain. Let's demonstrate this:
+
+```js
+let obj1 = {};
+Object.getPrototypeOf(obj1); // points to Object.prototype
+obj1.prop1 = "abc";
+console.log(obj1.valueOf()); // prints: {prop1: "abc"}
+```
+
+We didn't give our `obj1` object a `valueOf` method, but `obj1` has its [[prototype]] point to Object.prototype, and so through the prototype chain has access to the methods and properties of Object.prototype (in OO speak we'd say it has _inherited_ those methods and properties).
+
+The same applies to arrays. There is a big global function called [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array). Array has a prototype property which refers to an Array.prototype object. A bunch of methods are stored on Array.prototype such as `forEach` and `map` and `reduce` and `push`. When you create a new array such as `arr1`, it has `arr1.[[prototype]]` set to `Array.prototype`. That's why when you create a new array, you can instantly use a bunch of methods on it. They don't magically appear out of nowhere, your array is just accessing these methods through the prototype chain.
+
+```js
+let arr1 = [];
+Object.is(Array.prototype, Object.getPrototypeOf(arr1)); // true
+arr1.push(2);
+arr1.forEach((item) => console.log(item)); //prints: 2
+```
+
+When I was learning JavaScript, a lightbulb went on in my head when I finally _got_ this concept. These methods that we use constantly in our code, they are not magic! Everything can be explained using objects and the prototype chain.
+
+So what about this Array.prototype object. It's an object itself, right? That means it has a [[prototype]] property. What does its [[prototype]] refer to? Object.prototype of course! That's why Object.prototype can be thought of as the granddaddy of all other objects in JavaScript.
+
+![Arrays and objects and prototype](assets/0007_prototype_06.svg)
+
+Object.prototype has its own [[prototype]] set to `null`. That's where the prototype chain stops.
+
+If we want to create a _truly_ empty object, we need to use `Object.create` and pass `null` as an argument. Then our object won't have its [[prototype]] set to Object.prototype. It would be set to `null`.
+
+```js
+let obj1 = {};
+let obj2 = Object.create(null);
+obj1.prop = 1;
+obj2.prop = 1;
+obj1.toString(); //prints: "[object Object]"
+obj2.toString(); //Error: obj2.toString is not a function
+```
+
+obj1 is created using the literal syntax, so has its [[prototype]] property set to Object.prototype and it has access to the methods stored there including a `toString` method. obj2 is created as an empty object and has its [[prototype]] set to `null`. Since we didn't specify a `toString` method for it, it has no access to a `toString` method, so trying to access such a method throws an error.
+
+![literal syntax and Object.create difference](assets/0007_prototype_07.svg)
+
+So objects are objects and have a prototype property, and arrays are objects and have a prototype property. What about functions? You probably know the answer: yes they are also objects, and yes they also have a prototype property. In the same way that `arr1` has its [[prototype]] set to `Array.prototype`, when we create a new object from a function (using `new`) it sets that object's [[prototype]] to refer to the function's `prototype`. Let's bring all our code in this section together and complete our diagram:
+
+```js
+let obj1 = {};
+let obj2 = Object.create(null);
+obj1.prop = 1;
+obj2.prop = 1;
+let arr1 = [];
+arr1.push(2);
+//Functions are objects too!
+function Person(name) {
+  this.name = name;
+}
+
+Person.prototype.greeting = function (salutation) {
+  console.log(salutation, this.name, "?");
+};
+const statement = "How are you today";
+var person1 = new Person("Ryan");
+person1.greeting(statement); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting(statement); //prints: How are you today Alice ?
+```
+
+![complete mental model of prototypes](assets/0007_prototype_08.svg)
+
+You can now clearly see that all objects that are created from the Person function using the `new` keyword will have access to methods stored in Person.prototype. So if we add a method to Person.prototype, all such objects have access the methods stored there. This is how you'd share methods in JavaScript between object.
+
+As the start of this section we saw this code using ES6 class syntax:
+
+```js
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greeting(salutation) {
+    console.log(salutation, this.name, "?");
+  }
+}
+const statement = "How are you today";
+var person1 = new Person("Ryan");
+person1.greeting(statement); //prints: How are you today Ryan ?
+var person2 = new Person("Alice");
+person2.greeting(statement); //prints: How are you today Alice ?
+```
+
+This might look like the class syntax of traditional OO languages, but under the hood, JavaScript is using its prototypal system and linking objects via [[prototype]] and `prototype` to implement the class syntax.
+
+If I'm brutally honest, the terminology in this section can be very confusing and off-putting to beginners to JavaScript. The nomenclature is all over the place, object vs Object, prototype vs `[[prototype]]` vs `__proto__` , etc. I've tried to present a simplified mental model that makes sense to me, but I've glossed over a lot of the details and historical artefacts such as `__proto__` and `constructor` as a result. The model presented here is (hopefully) enough to understand JavaScript's prototypal system. For those who would like a more in depth understanding, I've found the following resources helpful: [javascript.info](https://javascript.info/prototype-inheritance)'s section on prototypes, [this article](https://hackernoon.com/understand-nodejs-javascript-object-inheritance-proto-prototype-class-9bd951700b29) by Peter Chang and [this one](http://dmitrysoshnikov.com/ecmascript/javascript-the-core-2nd-edition/#prototype) by Dmitry Soshnikov.
+
+The prototype system, despite its confusing terminology, can lead to very powerful and very elegant organisation of code. As a final exercise, let's refactor our previous exercise from class syntax to use the prototype system.
+
+<small>All diagrams drawn with [excalidraw](https://github.com/excalidraw/excalidraw).</small>
+
+## Exercise 9 Prototype
+
+> In this exercise, refactor some code that manages student enrolment records for a workshop, from the class pattern to use JavaScript's prototypes.
+>
+> - You solution can either use constructor functions and their `prototype` object to create the deepJS object using the `new` keyword.
+> - Alternatively use Object.create to create deepJS and have its [[prototype]] refer to Workshop
+> - Keep Helpers and Workshop as seperate functions (if you are using `new`) or objects (if you are using Object.create)
+
+```js
+class Helpers {
+  sortByNameAsc(record1, record2) {
+    if (record1.name < record2.name) return -1;
+    else if (record1.name > record2.name) return 1;
+    else return 0;
+  }
+
+  printRecord(record) {
+    console.log(
+      `${record.name} (${record.id}): ${record.paid ? "Paid" : "Not Paid"}`
+    );
+  }
+}
+
+class Workshop extends Helpers {
+  constructor() {
+    super();
+    this.currentEnrollment = [];
+    this.studentRecords = [];
+  }
+
+  addStudent(id, name, paid) {
+    this.studentRecords.push({ id, name, paid });
+  }
+
+  enrollStudent(id) {
+    if (!this.currentEnrollment.includes(id)) {
+      this.currentEnrollment.push(id);
+    }
+  }
+
+  printCurrentEnrollment() {
+    this.printRecords(this.currentEnrollment);
+  }
+
+  enrollPaidStudents() {
+    this.currentEnrollment = this.paidStudentsToEnroll();
+    this.printCurrentEnrollment();
+  }
+
+  remindUnpaidStudents() {
+    this.remindUnpaid(this.currentEnrollment);
+  }
+
+  getStudentFromId(studentId) {
+    return this.studentRecords.find(matchId);
+
+    // *************************
+
+    function matchId(record) {
+      return record.id == studentId;
+    }
+  }
+
+  printRecords(recordIds) {
+    var records = recordIds.map(this.getStudentFromId.bind(this));
+
+    records.sort(this.sortByNameAsc);
+
+    records.forEach(this.printRecord);
+  }
+
+  paidStudentsToEnroll() {
+    var recordsToEnroll = this.studentRecords.filter(
+      this.needToEnroll.bind(this)
+    );
+
+    var idsToEnroll = recordsToEnroll.map(this.getStudentId);
+
+    return [...this.currentEnrollment, ...idsToEnroll];
+  }
+
+  needToEnroll(record) {
+    return record.paid && !this.currentEnrollment.includes(record.id);
+  }
+
+  getStudentId(record) {
+    return record.id;
+  }
+
+  remindUnpaid(recordIds) {
+    var unpaidIds = recordIds.filter(this.notYetPaid.bind(this));
+
+    this.printRecords(unpaidIds);
+  }
+
+  notYetPaid(studentId) {
+    var record = this.getStudentFromId(studentId);
+    return !record.paid;
+  }
+}
+
+// ********************************
+
+var deepJS = new Workshop();
+
+deepJS.addStudent(311, "Frank", /*paid=*/ true);
+deepJS.addStudent(410, "Suzy", /*paid=*/ true);
+deepJS.addStudent(709, "Brian", /*paid=*/ false);
+deepJS.addStudent(105, "Henry", /*paid=*/ false);
+deepJS.addStudent(502, "Mary", /*paid=*/ true);
+deepJS.addStudent(664, "Bob", /*paid=*/ false);
+deepJS.addStudent(250, "Peter", /*paid=*/ true);
+deepJS.addStudent(375, "Sarah", /*paid=*/ true);
+deepJS.addStudent(867, "Greg", /*paid=*/ false);
+
+deepJS.enrollStudent(410);
+deepJS.enrollStudent(105);
+deepJS.enrollStudent(664);
+deepJS.enrollStudent(375);
+
+deepJS.printCurrentEnrollment();
+console.log("----");
+deepJS.enrollPaidStudents();
+console.log("----");
+deepJS.remindUnpaidStudents();
+
+/* Output should be:
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Frank (313): Paid
+	Henry (105): Not Paid
+	Mary (502): Paid
+	Peter (250): Paid
+	Sarah (375): Paid
+	Suzy (410): Paid
+	----
+	Bob (664): Not Paid
+	Henry (105): Not Paid
+*/
+```
+
+## Solution 9: Prototype Exercise
+
+### Method 1 using constructor functions and `new`
+
+{% codepen https://codepen.io/ryanameri/pen/WNwOyzq default-tab=js %}
+
+### Method 2 using `Object.create()`
+
+{% codepen https://codepen.io/ryanameri/pen/zYqzajo default-tab=js %}
+
+Method 1 is really a hack to mimic the behaviour of classes. We store our methods on Helpers.prototype and Workshop.prototype, link the two objects together using `Object.setPrototypeOf(Workshop.prototype, Helpers.prototype)` and can then create our deepJS object using `deepJS = new Workshop()`. The behaviour of the methods as we see is exactly the same and that is because the behaviour of `this` is exactly the same between classes and prototypes.
+
+Method 2 might be the most elegant, and probably the most _pure JavaScript_ way of storing our data. Here there are no constructor functions and there is no `new` keyword. We are not pretending that our prototypes are classes, we are simply using the power that comes from linking objects together. We store our methods directly on objects Helpers and Workshop and link the two using Object.create. Finally we create our deepJS object using Object.create and assign its [[prototype]] to point to Workshop. We can then store our data directly on the object and perform all our methods on it.
+
+## Wrap up
