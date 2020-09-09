@@ -1,5 +1,5 @@
 ---
-title: Why you should think like JavaScript
+title: Think Like JavaScript
 description: An introduction to Think Like JavaScript series
 tags: javascript, webdev
 series: Think Like JavaScript
@@ -7,13 +7,13 @@ series: Think Like JavaScript
 
 ## JavaScript is peculiar
 
-JavaScript is a _peculiar_ and _unique_ language. Peculiar because on the surface, it's a scripting language which largely resembles languages such as Java and C#. Deep down however, it's got more in common with programming languages such as [Scheme](<https://en.wikipedia.org/wiki/Scheme_(programming_language)>) and [Self](<https://en.wikipedia.org/wiki/Self_(programming_language)>); languages that are mostly unknown outside of computer science academic circles or niche specialties. Most of us approaching JavaScript with a background in Java or PHP are initially deceived by JavaScript's Java-like syntax into thinking we know how it works. Then we scratch the surface, come across prototypes or how to determine the scope of `this`, and our mental model breaks down. Suddenly JavaScript looks weird, and our code has inexplicable bugs.
+JavaScript is a _peculiar_ and _unique_ language. Peculiar because on the surface, it's a scripting language with a syntax which largely resembles languages such as Java and C#. Deep down however, it's got more in common with programming languages such as [Scheme](<https://en.wikipedia.org/wiki/Scheme_(programming_language)>) and [Self](<https://en.wikipedia.org/wiki/Self_(programming_language)>); languages that are mostly unknown outside of computer science academic circles or niche specialties. Most of us approaching JavaScript with a background in Java or PHP are initially deceived by JavaScript's Java-like syntax into thinking we know how it works. Then we scratch the surface, come across prototypes or how to determine the scope of `this`, and our mental model breaks down. Suddenly JavaScript looks weird, and our code has inexplicable bugs.
 
 ## But JavaScript is universal
 
 But JavaScript is the world's [most used programming language](https://insights.stackoverflow.com/survey/2019#technology-_-programming-scripting-and-markup-languages). It is also the lingua franca of the biggest platform ever created: the Web. In terms of reach, number of users or number of applications developed, the web is larger than iOS, Android and Windows combined; and JavaScript has been pretty much its only programming language since first introduced in 1995. Many have tried to dislodge it from its place, Sun with Java applets, Adobe with Flash and ActionScript, Microsoft with JScript and Active X, and later on again with .Net and Silverlight, Google with Chrome Native Client. All have failed. I am a big fan of [Wasm](https://en.wikipedia.org/wiki/WebAssembly) and very hopeful that it can succeed in bringing other programming languages to the web, but I have no doubts that twenty years from now, as was the case twenty years ago, the main language of the web will still be JavaScript.
 
-Not that JavaScript's use is limited to frontend web development of course. Now that with node.js and Deno it runs on the backend, with Electron it runs desktop applications, and with React Native (among others) it can be used to create mobile apps. No matter which area we practice in, it is upon us as practitioners to learn our tool well. If we need to use JavaScript and want to learn how to write code with less bugs, we need to understand how to think like JavaScript.
+Not that JavaScript's use is limited to frontend web development of course; with node.js and Deno it runs on the backend, with Electron it runs desktop applications, and with React Native (amongst others) it can be used to create mobile apps. No matter which area we practice in, it is upon us as practitioners to learn our tools well. If our tool is JavaScript and we want to learn how to write code with less bugs, we need to understand how to think like JavaScript.
 
 [Kyle Simpson](https://github.com/getify) says:
 
@@ -69,4 +69,4 @@ The "Think Like JavaScript" series will cover the following pillars of JavaScrip
 
 Each section will end with a practice exercise to solidify the topics covered in the post. In the latter sections, we will develop a library checkout system and implement the same program using various different structures: using functions, modules, classes and prototypes. This will enable us to clearly see the pros and cons of each, and where each structure might be preferred.
 
-Though this blog series' content and presentation are my own and original, I owe a heavy debt to [Kyle Simpson](https://twitter.com/getify?lang=en) for his excellent structure of material in his [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on [Frontend Masters](https://frontendmasters.com). I'd highly encourage those who want to dive more in-depth to take the course and to read his [You Don't Know JS](https://github.com/getify/You-Dont-Know-JS) book series. This does **not** imply that the content here is in any shape or form endorsed or approved by Kyle Simpson.
+Though this blog series' content and presentation are my own and original, I owe a heavy debt to [Kyle Simpson](https://twitter.com/getify?lang=en) for his excellent [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on [Frontend Masters](https://frontendmasters.com). I'd highly encourage those who want to dive more in-depth to take the course and to read his [You Don't Know JS](https://github.com/getify/You-Dont-Know-JS) book series. This does **not** imply that the content here is in any shape or form endorsed or approved by Kyle Simpson.
