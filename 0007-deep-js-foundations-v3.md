@@ -1,4 +1,4 @@
-# Deep JavaScript Foundations
+# Deep JS Foundations V3
 
 In this series, we'll do a deep dive into the foundations of JavaScript. This series is geared towards the intrepid web developer who has a fair understanding of using JavaScript and wants to delve a bit more into its internals to see how it _really_ works. If you've been able to follow my [Mastering Hard Parts of JavaScript](https://dev.to/ryanameri/mastering-hard-parts-of-javascript-callbacks-i-3aj0) series, you're good to go!
 
@@ -8,7 +8,7 @@ In this series, we'll do a deep dive into the foundations of JavaScript. This se
 - Where should you use arrow functions and where should you avoid them?
 - Should you avoid using `this`? When should you use a namespace object and when should you use a module?
 
-The blog series is based on [Kyle Simpson's](https://twitter.com/getify?lang=en) excellent [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on Frontend Masters. The slides for the course are freely available [here](https://static.frontendmasters.com/resources/2019-03-07-deep-javascript-v2/deep-js-foundations-v2.pdf).
+The blog series is based on [Kyle Simpson's](https://twitter.com/getify?lang=en) excellent [Deep JavaScript Foundations v3](https://frontendmasters.com/courses/deep-javascript-v3/introduction/) course on Frontend Masters.
 
 Though the content and the presentation are my own, this blog series owes a heavy debt to Getify for his excellent structure of material and for obviously being the _source of truth_ when it comes to JavaScript. I'd highly encourage everyone take the course if they can and to read his [You Don't Know JS](https://github.com/getify/You-Dont-Know-JS) book series.
 
@@ -33,7 +33,6 @@ We'll cover the following "Pillars of JavaScript" in this series:
    - this
    - class
    - Prototypes
-   - Object Oriented vs. OLOO
 
 ## Types
 
@@ -474,7 +473,7 @@ function setsMatch(arr1, arr2) {
 
 {% codepen https://codepen.io/ryanameri/pen/abNBBqP default-tab=js %}
 
-Full disclosure: I struggled for over an hour on this exercise. I ended up using the [Array.prototype.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) method to cycle through the array items, Kyle constructs the array manually and loops through it. Both methods are very similar and the the logic is pretty much identical, but that's due to the corner cases involved and the structure of the tests.
+I ended up using the [Array.prototype.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) method to cycle through the array items, Kyle constructs the array manually and loops through it. Both methods are very similar and the the logic is pretty much identical, but that's due to the corner cases involved and the structure of the tests.
 
 The most important lesson to take away from this exercise is that, if you want to be absolutely sure that `Y` is equal to `X` and only `X`, your best option is to use `Object.is()` because any other comparison operator, including `===` has edge cases. Going through this exercise makes you aware of pretty much all these corner cases in JavaScript when dealing with coercing values from one type to the other. This should build up your confidence to not be afraid of using the double equality `==` operator, when it makes sense.
 
@@ -2275,7 +2274,7 @@ Of course we know what the the `new` keyword does. It creates a new object, sets
 
 ### Constructor
 
-The constructor method is optional, but if we include it in our class, it it called ever time a new object is being created (_instantiated_ in OO parlance), which could give our class more flexibility. For example:
+The constructor method is optional, but if we include it in our class, it it called every time a new object is created (_instantiated_ in OO parlance), which could give our class more flexibility. For example:
 
 ```js
 class Person {
@@ -2972,8 +2971,8 @@ deepJS.remindUnpaidStudents();
 
 {% codepen https://codepen.io/ryanameri/pen/zYqzajo default-tab=js %}
 
-Method 1 is really a hack to mimic the behaviour of classes. We store our methods on Helpers.prototype and Workshop.prototype, link the two objects together using `Object.setPrototypeOf(Workshop.prototype, Helpers.prototype)` and can then create our deepJS object using `deepJS = new Workshop()`. The behaviour of the methods as we see is exactly the same and that is because the behaviour of `this` is exactly the same between classes and prototypes.
+Method 1 is really a hack to mimic the behaviour of classes. We store our methods on Helpers.prototype and Workshop.prototype, link the two objects together using `Object.setPrototypeOf(Workshop.prototype, Helpers.prototype)` and then create our deepJS object using `deepJS = new Workshop()`. The behaviour of methods as we see is exactly the same and that is because the behaviour of `this` is exactly the same between classes and old-fashioned functions.
 
-Method 2 might be the most elegant, and probably the most _pure JavaScript_ way of storing our data. Here there are no constructor functions and there is no `new` keyword. We are not pretending that our prototypes are classes, we are simply using the power that comes from linking objects together. We store our methods directly on objects Helpers and Workshop and link the two using Object.create. Finally we create our deepJS object using Object.create and assign its [[prototype]] to point to Workshop. We can then store our data directly on the object and perform all our methods on it.
+Method 2 might be the most elegant, and probably the most _pure JavaScript_ way of storing data. Here there are no constructor functions and there is no `new` keyword. We are not pretending that our prototypes are classes, we are simply using the power that comes from linking objects together. We store our methods directly on objects Helpers and Workshop and link the two using Object.create. Finally we create our deepJS object using Object.create and assign its [[prototype]] to point to Workshop. We can then store our data directly on the object and perform all our operations on it.
 
 ## Wrap up
