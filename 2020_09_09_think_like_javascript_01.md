@@ -5,21 +5,19 @@ tags: javascript, webdev
 series: Think Like JavaScript
 ---
 
-# Why you should think like JavaScript
-
 ## JavaScript is peculiar
 
 JavaScript is a _peculiar_ and _unique_ language. Peculiar because on the surface, it's a scripting language which largely resembles languages such as Java and C#. Deep down however, it's got more in common with programming languages such as [Scheme](<https://en.wikipedia.org/wiki/Scheme_(programming_language)>) and [Self](<https://en.wikipedia.org/wiki/Self_(programming_language)>); languages that are mostly unknown outside of computer science academic circles or niche specialties. Most of us approaching JavaScript with a background in Java or PHP are initially deceived by JavaScript's Java-like syntax into thinking we know how it works. Then we scratch the surface, come across prototypes or how to determine the scope of `this`, and our mental model breaks down. Suddenly JavaScript looks weird, and our code has inexplicable bugs.
 
 ## But JavaScript is universal
 
-But JavaScript is the world's [most used programming language](https://insights.stackoverflow.com/survey/2019#technology-_-programming-scripting-and-markup-languages). It is also the lingua franca of the biggest platform created: the Web. In terms of reach, number of users or number of applications developed, the web is larger than iOS, Android and Windows combined; and JavaScript has been pretty much its only programming language since first introduced in 1995. Many have tried to dislodge it from its place, Sun with Java applets, Adobe with Flash and ActionScript, Microsoft with JScript and Active X, and later on again with .Net and Silverlight, Google with Chrome Native Client. All have failed. I am big fan of [Wasm](https://en.wikipedia.org/wiki/WebAssembly) and very hopeful that it can succeed in bringing other programming languages to the web, but I have no doubts that twenty years from now, as was the case twenty years ago, the main language of the web will still be JavaScript.
+But JavaScript is the world's [most used programming language](https://insights.stackoverflow.com/survey/2019#technology-_-programming-scripting-and-markup-languages). It is also the lingua franca of the biggest platform ever created: the Web. In terms of reach, number of users or number of applications developed, the web is larger than iOS, Android and Windows combined; and JavaScript has been pretty much its only programming language since first introduced in 1995. Many have tried to dislodge it from its place, Sun with Java applets, Adobe with Flash and ActionScript, Microsoft with JScript and Active X, and later on again with .Net and Silverlight, Google with Chrome Native Client. All have failed. I am a big fan of [Wasm](https://en.wikipedia.org/wiki/WebAssembly) and very hopeful that it can succeed in bringing other programming languages to the web, but I have no doubts that twenty years from now, as was the case twenty years ago, the main language of the web will still be JavaScript.
 
-Not that JavaScript's use is limited to frontend web development of course. Now that with node.js and Deno it runs on the backend, with Electron it runs desktop applications, and with React Native (among others) it can be used to create mobile apps. No matter which area we practice in, it is upon us as practitioners to learn our tool well. If we want to learn how to write code with less bugs, we need to understand how to think like JavaScript.
+Not that JavaScript's use is limited to frontend web development of course. Now that with node.js and Deno it runs on the backend, with Electron it runs desktop applications, and with React Native (among others) it can be used to create mobile apps. No matter which area we practice in, it is upon us as practitioners to learn our tool well. If we need to use JavaScript and want to learn how to write code with less bugs, we need to understand how to think like JavaScript.
 
 [Kyle Simpson](https://github.com/getify) says:
 
-<h3 align="center"> Whenever there's a divergence between what your brain thinks is happening, and what the computer does, that's where bugs enter code <em> - getify's law #17</em></h3><br>
+<h3 align="center"> Whenever there's a divergence between what your brain thinks is happening, and what the computer does, that's where bugs enter code</h3><br>
 
 ## Who is this series for
 
@@ -47,11 +45,11 @@ Most other popular languages of the past twenty something years can't boast the 
 
 JavaScript however has not had the luxury of breaking backwards compatibility due to its unique place as the language of the web. The designers of JavaScript have always been aware that changing JavaScript in a backwards incompatible way would mean that some old, neglected, but still useful website out there would break and never be fixed again. As such they've had to evolve JavaScript with this huge constraint around their neck. They even take this commitment so seriously that when introducing new features to the language, they try to make sure that whatever keyword they pick up breaks the least number of websites and libraries out there (this is how we end up with inelegant names such as [globalThis](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis)).
 
-It's important to keep this unique history in mind as we learn to think like JavaScript, which involves being aware of its historical bugs and peculiarities. On the other hand, as a JavaScript developer, you are blessed knowing that whatever code your write will probably run as you intended, twenty years from now.
+It's important to keep this unique history in mind as we learn to think like JavaScript, which involves being aware of its historical bugs and peculiarities. On the other hand, as a JavaScript developer, you are blessed knowing that whatever code you write will probably run as you intend it, twenty years from now.
 
 ## Structure of the series and credits
 
-The Think Like JavaScript series will cover the following "Pillars of JavaScript":
+The "Think Like JavaScript" series will cover the following pillars of JavaScript:
 
 1. Types
    - Primitive Types
@@ -66,7 +64,7 @@ The Think Like JavaScript series will cover the following "Pillars of JavaScript
    - Modules
 3. Objects
    - this
-   - class
+   - Class
    - Prototypes
 
 Each section will end with a practice exercise to solidify the topics covered in the post. In the latter sections, we will develop a library checkout system and implement the same program using various different structures: using functions, modules, classes and prototypes. This will enable us to clearly see the pros and cons of each, and where each structure might be preferred.
